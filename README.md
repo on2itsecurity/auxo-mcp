@@ -17,7 +17,7 @@ You need an API token for each AUXO domain you want to use:
 - **Zero Trust token** — required for protect surfaces, locations, states, measures, flows, contacts, and assets.
 - **Tickets token** — required for case/ticket management.
 
-You only need the token(s) for the domain(s) you intend to use; the server automatically enables features based on which tokens are provided. Tokens can be requested by contacting [ON2IT support](mailto://support@on2it.net).
+You only need the token(s) for the domain(s) you intend to use; the server automatically enables features based on which tokens are provided. Tokens can be requested by contacting [ON2IT support](mailto:support@on2it.net).
 
 ## Installation
 
