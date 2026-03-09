@@ -50,6 +50,28 @@ case "${1:-}" in
     ;;
 esac
 
+# Build missing binaries locally if Go is available
+build_binary_if_missing() {
+  local goos="$1" goarch="$2" output="$3"
+  if [ -f "$output" ]; then
+    return 0
+  fi
+  if ! command -v go &>/dev/null; then
+    echo "Warning: $output not found and Go not available to compile it"
+    return 1
+  fi
+  echo "Compiling $(basename "$output") locally..."
+  mkdir -p "$DIST_DIR"
+  (cd "$PROJECT_DIR/server" && CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -o "$output" .)
+}
+
+for arch in $DARWIN_ARCHS; do
+  build_binary_if_missing darwin "$arch" "$DIST_DIR/auxo-mcp-server-darwin-${arch}"
+done
+for arch in $WINDOWS_ARCHS; do
+  build_binary_if_missing windows "$arch" "$DIST_DIR/auxo-mcp-server-windows-${arch}.exe"
+done
+
 # Check if we can create a universal macOS binary
 DARWIN_BINS=()
 for arch in $DARWIN_ARCHS; do

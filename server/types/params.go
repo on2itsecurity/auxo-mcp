@@ -116,7 +116,7 @@ type CaseParams struct {
 	Note                string `json:"note,omitempty" jsonschema:"Initial note or description for the case (required for create)"`
 	Priority            *int   `json:"priority,omitempty" jsonschema:"Case priority from 1 to 4, where 1 is the highest priority (required for create, optional for priority update)"`
 	CaseType            string `json:"case_type,omitempty" jsonschema:"The type of case: 'securityincident', 'incident', 'change', 'standardchange', 'inforequest' (required for create)"`
-	PrimaryContactEmail string `json:"primary_contact_email,omitempty" jsonschema:"Email address of the primary contact - must match a user in the system (required for create, optional for contact update)"`
+	PrimaryContactEmail *string `json:"primary_contact_email,omitempty" jsonschema:"Email address of the primary contact - must match a user in the system (required for create, optional for contact update)"`
 
 	// For update operations
 	NewSubject             string `json:"new_subject,omitempty" jsonschema:"New subject/title when updating the case subject"`

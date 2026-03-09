@@ -36,7 +36,7 @@ func (t *CaseTools) Create(ctx context.Context, req *mcp.CallToolRequest, args t
 	if args.CaseType == "" {
 		return nil, nil, fmt.Errorf("case_type is required for creating a case (valid values: 'securityincident', 'incident', 'change', 'standardchange', 'inforequest')")
 	}
-	if args.PrimaryContactEmail == "" {
+	if args.PrimaryContactEmail == nil || *args.PrimaryContactEmail == "" {
 		return nil, nil, fmt.Errorf("primary_contact_email is required for creating a case")
 	}
 
@@ -86,6 +86,33 @@ func (t *CaseTools) Create(ctx context.Context, req *mcp.CallToolRequest, args t
 	}
 
 	jsonData, err := json.Marshal(successMsg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	content := []mcp.Content{
+		&mcp.TextContent{
+			Text: string(jsonData),
+		}}
+
+	return &mcp.CallToolResult{
+		Content: content,
+	}, nil, nil
+}
+
+// GetAll handles getting all cases
+func (t *CaseTools) GetAll(ctx context.Context, req *mcp.CallToolRequest, args types.EmptyParams) (*mcp.CallToolResult, any, error) {
+	auxoClient, err := t.clientManager.CreateCaseClient(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cases, err := auxoClient.CaseIntegration.GetCases(ctx)
+	if err != nil {
+		return nil, nil, client.FriendlyError(err)
+	}
+
+	jsonData, err := json.Marshal(cases)
 	if err != nil {
 		return nil, nil, err
 	}
