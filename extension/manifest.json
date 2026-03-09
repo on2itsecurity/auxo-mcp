@@ -1,0 +1,185 @@
+{
+  "manifest_version": "0.3",
+  "name": "auxo-mcp-server",
+  "version": "0.0.3",
+  "display_name": "AUXO MCP Server",
+  "description": "Access AUXO Zero Trust and Case Management from Claude",
+  "author": {
+    "name": "ON2IT"
+  },
+  "icon": "icon.png",
+  "server": {
+    "type": "binary",
+    "entry_point": "bin/auxo-mcp-server",
+    "mcp_config": {
+      "command": "${__dirname}/bin/auxo-mcp-server",
+      "args": [],
+      "env": {
+        "AUXO_API_URL": "${user_config.api_url}",
+        "AUXO_ZT_TOKEN": "${user_config.zt_token}",
+        "AUXO_TICKET_TOKEN": "${user_config.ticket_token}"
+      },
+      "platform_overrides": {
+        "win32": {
+          "command": "${__dirname}/bin/auxo-mcp-server.exe"
+        }
+      }
+    }
+  },
+  "user_config": {
+    "zt_token": {
+      "type": "string",
+      "title": "Zero Trust API Token",
+      "description": "Your AUXO Zero Trust API token. Providing this token automatically enables Zero Trust features (protect surfaces, locations, states, measures, etc.).",
+      "sensitive": true,
+      "required": false
+    },
+    "ticket_token": {
+      "type": "string",
+      "title": "Tickets API Token",
+      "description": "Your AUXO Tickets/Case Management API token. Providing this token automatically enables case management features.",
+      "sensitive": true,
+      "required": false
+    },
+    "api_url": {
+      "type": "string",
+      "title": "API URL",
+      "description": "AUXO API endpoint. Leave empty to use the default (api.on2it.net).",
+      "default": "api.on2it.net",
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "createProtectSurface",
+      "description": "Create a new protect surface"
+    },
+    {
+      "name": "listProtectSurfaces",
+      "description": "List all protect surfaces"
+    },
+    {
+      "name": "updateProtectSurface",
+      "description": "Update an existing protect surface"
+    },
+    {
+      "name": "deleteProtectSurface",
+      "description": "Delete one or more protect surfaces"
+    },
+    {
+      "name": "createLocation",
+      "description": "Create a new location"
+    },
+    {
+      "name": "listLocations",
+      "description": "List all locations"
+    },
+    {
+      "name": "updateLocation",
+      "description": "Update an existing location"
+    },
+    {
+      "name": "deleteLocation",
+      "description": "Delete one or more locations"
+    },
+    {
+      "name": "createState",
+      "description": "Create a new state"
+    },
+    {
+      "name": "listStates",
+      "description": "List all states"
+    },
+    {
+      "name": "updateState",
+      "description": "Update an existing state"
+    },
+    {
+      "name": "deleteState",
+      "description": "Delete one or more states"
+    },
+    {
+      "name": "listContacts",
+      "description": "List all contacts"
+    },
+    {
+      "name": "listAssets",
+      "description": "List all assets"
+    },
+    {
+      "name": "listMeasures",
+      "description": "Search security measures from the AUXO catalog"
+    },
+    {
+      "name": "listProtectSurfaceMeasures",
+      "description": "List measures assigned to a protect surface"
+    },
+    {
+      "name": "updateProtectSurfaceMeasure",
+      "description": "Add or update measure implementation status on a protect surface"
+    },
+    {
+      "name": "removeMeasureFromProtectSurface",
+      "description": "Remove a measure assignment from a protect surface"
+    },
+    {
+      "name": "createTransactionFlow",
+      "description": "Create a flow between two protect surfaces"
+    },
+    {
+      "name": "createExternalFlow",
+      "description": "Create a flow to/from outside the organization"
+    },
+    {
+      "name": "listTransactionFlows",
+      "description": "List all flows for a protect surface"
+    },
+    {
+      "name": "deleteTransactionFlow",
+      "description": "Delete a flow between two protect surfaces"
+    },
+    {
+      "name": "deleteExternalFlow",
+      "description": "Delete an external flow for a protect surface"
+    },
+    {
+      "name": "createCase",
+      "description": "Create a new support case/ticket"
+    },
+    {
+      "name": "getCase",
+      "description": "Get case details by ID"
+    },
+    {
+      "name": "updateCasePriority",
+      "description": "Update the priority of an existing case"
+    },
+    {
+      "name": "updateCasePrimaryContact",
+      "description": "Update the primary contact email for a case"
+    },
+    {
+      "name": "updateCaseSubject",
+      "description": "Update the subject of an existing case"
+    },
+    {
+      "name": "escalateCase",
+      "description": "Escalate a case to higher priority attention"
+    },
+    {
+      "name": "deescalateCase",
+      "description": "De-escalate a case back to normal handling"
+    },
+    {
+      "name": "addNoteToCase",
+      "description": "Add a note/comment to an existing case"
+    },
+    {
+      "name": "closeCase",
+      "description": "Request to close a case"
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32"]
+  }
+}
