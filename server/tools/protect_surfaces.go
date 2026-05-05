@@ -88,6 +88,37 @@ func (t *ProtectSurfaceTools) Create(ctx context.Context, req *mcp.CallToolReque
 	}, nil, nil
 }
 
+// Get handles getting a protect surface by ID
+func (t *ProtectSurfaceTools) Get(ctx context.Context, req *mcp.CallToolRequest, args types.ProtectSurfaceParams) (*mcp.CallToolResult, any, error) {
+	if args.ID == "" {
+		return nil, nil, fmt.Errorf("id is required for getting a protect surface")
+	}
+
+	auxoClient, err := t.clientManager.CreateClient(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ps, err := auxoClient.ZeroTrust.GetProtectSurfaceByID(ctx, args.ID)
+	if err != nil {
+		return nil, nil, client.FriendlyError(err)
+	}
+
+	jsonData, err := json.Marshal(ps)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	content := []mcp.Content{
+		&mcp.TextContent{
+			Text: string(jsonData),
+		}}
+
+	return &mcp.CallToolResult{
+		Content: content,
+	}, nil, nil
+}
+
 // protectSurfaceSummary is a lightweight representation for list responses
 type protectSurfaceSummary struct {
 	ID        string `json:"id"`
