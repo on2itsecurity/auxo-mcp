@@ -25,6 +25,20 @@ type ProtectSurfaceParams struct {
 	CustomerLabels          map[string]string `json:"customer_labels,omitempty" jsonschema:"Customer specific Key=Value pairs for easy grouping and searching"`
 }
 
+// ListProtectSurfacesParams holds optional filters for listing protect surfaces.
+// All fields are optional; with none supplied, every protect surface is returned.
+// When multiple fields are supplied, all conditions must match (AND).
+type ListProtectSurfacesParams struct {
+	InZeroTrustFocus  *bool             `json:"in_zero_trust_focus,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces whose in_zero_trust_focus flag matches this value."`
+	InControlBoundary *bool             `json:"in_control_boundary,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces whose in_control_boundary flag matches this value."`
+	RelevanceMin      *int              `json:"relevance_min,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces with relevance >= this value (0-100)."`
+	RelevanceMax      *int              `json:"relevance_max,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces with relevance <= this value (0-100)."`
+	NameContains      string            `json:"name_contains,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces whose name contains this substring (case-insensitive)."`
+	DataTags          []string          `json:"data_tags,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces whose data_tags contain ALL of these values (e.g. ['PII','PCI'])."`
+	ComplianceTags    []string          `json:"compliance_tags,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces whose compliance_tags contain ALL of these values (e.g. ['GDPR','SOX'])."`
+	CustomerLabels    map[string]string `json:"customer_labels,omitempty" jsonschema:"Optional filter. If set, only return protect surfaces whose customer_labels contain every supplied key=value pair."`
+}
+
 // LocationParams for location operations (create, update, and delete)
 type LocationParams struct {
 	ID            string   `json:"id,omitempty" jsonschema:"The ID of the location (required for update and delete operations)"`

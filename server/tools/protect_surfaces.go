@@ -126,8 +126,10 @@ type protectSurfaceSummary struct {
 	Relevance int    `json:"relevance"`
 }
 
-// List handles protect surface listing
-func (t *ProtectSurfaceTools) List(ctx context.Context, req *mcp.CallToolRequest, args types.EmptyParams) (*mcp.CallToolResult, any, error) {
+// List handles protect surface listing with optional filters.
+// When no filters are supplied, every protect surface is returned (current behavior).
+// When multiple filters are supplied, all conditions must match (AND).
+func (t *ProtectSurfaceTools) List(ctx context.Context, req *mcp.CallToolRequest, args types.ListProtectSurfacesParams) (*mcp.CallToolResult, any, error) {
 	auxoClient, err := t.clientManager.CreateClient(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -138,14 +140,18 @@ func (t *ProtectSurfaceTools) List(ctx context.Context, req *mcp.CallToolRequest
 		return nil, nil, client.FriendlyError(err)
 	}
 
-	// Return lightweight summaries to reduce context window usage
-	summaries := make([]protectSurfaceSummary, len(allProtectSurfaces))
-	for i, ps := range allProtectSurfaces {
-		summaries[i] = protectSurfaceSummary{
+	// Return lightweight summaries to reduce context window usage,
+	// only for protect surfaces that match all supplied filters.
+	summaries := make([]protectSurfaceSummary, 0, len(allProtectSurfaces))
+	for _, ps := range allProtectSurfaces {
+		if !matchesProtectSurfaceFilter(ps, args) {
+			continue
+		}
+		summaries = append(summaries, protectSurfaceSummary{
 			ID:        ps.ID,
 			Name:      ps.Name,
 			Relevance: ps.Relevance,
-		}
+		})
 	}
 
 	jsonData, err := json.Marshal(summaries)
@@ -161,6 +167,56 @@ func (t *ProtectSurfaceTools) List(ctx context.Context, req *mcp.CallToolRequest
 	return &mcp.CallToolResult{
 		Content: content,
 	}, nil, nil
+}
+
+// matchesProtectSurfaceFilter returns true when ps satisfies every supplied
+// filter in args. Unset filters are skipped.
+func matchesProtectSurfaceFilter(ps *zerotrust.ProtectSurface, args types.ListProtectSurfacesParams) bool {
+	if args.InZeroTrustFocus != nil && ps.InZeroTrustFocus != *args.InZeroTrustFocus {
+		return false
+	}
+	if args.InControlBoundary != nil && ps.InControlBoundary != *args.InControlBoundary {
+		return false
+	}
+	if args.RelevanceMin != nil && ps.Relevance < *args.RelevanceMin {
+		return false
+	}
+	if args.RelevanceMax != nil && ps.Relevance > *args.RelevanceMax {
+		return false
+	}
+	if args.NameContains != "" {
+		if !strings.Contains(strings.ToLower(ps.Name), strings.ToLower(args.NameContains)) {
+			return false
+		}
+	}
+	if len(args.DataTags) > 0 && !containsAllStrings(ps.DataTags, args.DataTags) {
+		return false
+	}
+	if len(args.ComplianceTags) > 0 && !containsAllStrings(ps.ComplianceTags, args.ComplianceTags) {
+		return false
+	}
+	if len(args.CustomerLabels) > 0 {
+		for k, v := range args.CustomerLabels {
+			if got, ok := ps.CustomerLabels[k]; !ok || got != v {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// containsAllStrings reports whether haystack contains every element of needles.
+func containsAllStrings(haystack, needles []string) bool {
+	set := make(map[string]struct{}, len(haystack))
+	for _, h := range haystack {
+		set[h] = struct{}{}
+	}
+	for _, n := range needles {
+		if _, ok := set[n]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // Update handles protect surface updates
