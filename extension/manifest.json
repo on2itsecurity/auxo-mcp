@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.3",
   "name": "auxo-mcp-server",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "display_name": "AUXO MCP Server",
   "description": "Access AUXO Zero Trust and Case Management from Claude",
   "author": {
@@ -56,7 +56,11 @@
     },
     {
       "name": "listProtectSurfaces",
-      "description": "List all protect surfaces"
+      "description": "List protect surfaces (with optional filters)"
+    },
+    {
+      "name": "getProtectSurface",
+      "description": "Get full details of a protect surface by ID"
     },
     {
       "name": "updateProtectSurface",
