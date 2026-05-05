@@ -246,7 +246,8 @@ func main() {
 
 			// Register tools - Protect Surfaces
 			mcp.AddTool(server, &mcp.Tool{Name: "createProtectSurface", Description: "Create a new protect surface"}, protectSurfaceTools.Create)
-			mcp.AddTool(server, &mcp.Tool{Name: "listProtectSurfaces", Description: "Get All Protect Surfaces"}, protectSurfaceTools.List)
+			mcp.AddTool(server, &mcp.Tool{Name: "listProtectSurfaces", Description: "Get All Protect Surfaces, returns ID, Name and Relevance"}, protectSurfaceTools.List)
+			mcp.AddTool(server, &mcp.Tool{Name: "getProtectSurface", Description: "Get full details of a protect surface by its ID"}, protectSurfaceTools.Get)
 			mcp.AddTool(server, &mcp.Tool{Name: "updateProtectSurface", Description: "Update an existing protect surface"}, protectSurfaceTools.Update)
 			mcp.AddTool(server, &mcp.Tool{Name: "deleteProtectSurface", Description: "Delete one or more protect surfaces"}, protectSurfaceTools.Delete)
 

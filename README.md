@@ -152,6 +152,7 @@ http://localhost:8080/sse?zt_token=TOKEN&ticket_token=TOKEN
 | --------------------------------- | ---------------------------------------------- |
 | `createProtectSurface`            | Create a new protect surface                   |
 | `listProtectSurfaces`             | List all protect surfaces                      |
+| `getProtectSurface`               | Get full details of a protect surface by ID    |
 | `updateProtectSurface`            | Update an existing protect surface             |
 | `deleteProtectSurface`            | Delete one or more protect surfaces            |
 | `createLocation`                  | Create a new location                          |
