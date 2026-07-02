@@ -245,42 +245,42 @@ func main() {
 			resourceHandlers := resources.NewHandlers(effectiveClientManager)
 
 			// Register tools - Protect Surfaces
-			mcp.AddTool(server, &mcp.Tool{Name: "createProtectSurface", Description: "Create a new protect surface"}, protectSurfaceTools.Create)
-			mcp.AddTool(server, &mcp.Tool{Name: "listProtectSurfaces", Description: "List Protect Surfaces, returning a lightweight summary (id, name, relevance) for each. All filter parameters are optional; with none supplied, every protect surface is returned. When multiple filters are supplied, all conditions must match (AND)."}, protectSurfaceTools.List)
-			mcp.AddTool(server, &mcp.Tool{Name: "getProtectSurface", Description: "Get full details of a protect surface by its ID"}, protectSurfaceTools.Get)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateProtectSurface", Description: "Update an existing protect surface"}, protectSurfaceTools.Update)
-			mcp.AddTool(server, &mcp.Tool{Name: "deleteProtectSurface", Description: "Delete one or more protect surfaces"}, protectSurfaceTools.Delete)
+			tools.AddTool(server, &mcp.Tool{Name: "createProtectSurface", Description: "Create a new protect surface"}, protectSurfaceTools.Create)
+			tools.AddTool(server, &mcp.Tool{Name: "listProtectSurfaces", Description: "List Protect Surfaces, returning a lightweight summary (id, name, relevance) for each. All filter parameters are optional; with none supplied, every protect surface is returned. When multiple filters are supplied, all conditions must match (AND)."}, protectSurfaceTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "getProtectSurface", Description: "Get full details of a protect surface by its ID"}, protectSurfaceTools.Get)
+			tools.AddTool(server, &mcp.Tool{Name: "updateProtectSurface", Description: "Update an existing protect surface"}, protectSurfaceTools.Update)
+			tools.AddTool(server, &mcp.Tool{Name: "deleteProtectSurface", Description: "Delete one or more protect surfaces"}, protectSurfaceTools.Delete)
 
 			// Register tools - Locations
-			mcp.AddTool(server, &mcp.Tool{Name: "createLocation", Description: "Create a new location"}, locationTools.Create)
-			mcp.AddTool(server, &mcp.Tool{Name: "listLocations", Description: "Get All Locations"}, locationTools.List)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateLocation", Description: "Update an existing location"}, locationTools.Update)
-			mcp.AddTool(server, &mcp.Tool{Name: "deleteLocation", Description: "Delete one or more locations"}, locationTools.Delete)
+			tools.AddTool(server, &mcp.Tool{Name: "createLocation", Description: "Create a new location"}, locationTools.Create)
+			tools.AddTool(server, &mcp.Tool{Name: "listLocations", Description: "Get All Locations"}, locationTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "updateLocation", Description: "Update an existing location"}, locationTools.Update)
+			tools.AddTool(server, &mcp.Tool{Name: "deleteLocation", Description: "Delete one or more locations"}, locationTools.Delete)
 
 			// Register tools - States
-			mcp.AddTool(server, &mcp.Tool{Name: "createState", Description: "Create a new state"}, stateTools.Create)
-			mcp.AddTool(server, &mcp.Tool{Name: "listStates", Description: "Get All States"}, stateTools.List)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateState", Description: "Update an existing state"}, stateTools.Update)
-			mcp.AddTool(server, &mcp.Tool{Name: "deleteState", Description: "Delete one or more states"}, stateTools.Delete)
+			tools.AddTool(server, &mcp.Tool{Name: "createState", Description: "Create a new state"}, stateTools.Create)
+			tools.AddTool(server, &mcp.Tool{Name: "listStates", Description: "Get All States"}, stateTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "updateState", Description: "Update an existing state"}, stateTools.Update)
+			tools.AddTool(server, &mcp.Tool{Name: "deleteState", Description: "Delete one or more states"}, stateTools.Delete)
 
 			// Register tools - Contacts & Assets
-			mcp.AddTool(server, &mcp.Tool{Name: "listContacts", Description: "Get All Contacts"}, contactTools.List)
-			mcp.AddTool(server, &mcp.Tool{Name: "listAssets", Description: "Get All Assets"}, assetTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "listContacts", Description: "Get All Contacts"}, contactTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "listAssets", Description: "Get All Assets"}, assetTools.List)
 
 			// Register tools - Measures
-			mcp.AddTool(server, &mcp.Tool{Name: "listMeasures", Description: "List/search measures from the AUXO catalog. Filters: 'id' for exact measure ID lookup (e.g. 'ztmm-1.1'), 'category' for exact group/category match, 'search_query' for case-insensitive text search across name, caption and explanation. Without filters returns all measures. There is no framework filter; framework mappings are included in each measure's data."}, measureTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "listMeasures", Description: "List/search measures from the AUXO catalog. Filters: 'id' for exact measure ID lookup (e.g. 'ztmm-1.1'), 'category' for exact group/category match, 'search_query' for case-insensitive text search across name, caption and explanation. Without filters returns all measures. There is no framework filter; framework mappings are included in each measure's data."}, measureTools.List)
 
 			// Register tools - Protect Surface Measures
-			mcp.AddTool(server, &mcp.Tool{Name: "listProtectSurfaceMeasures", Description: "List measures assigned to a protect surface"}, protectSurfaceMeasureTools.List)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateProtectSurfaceMeasure", Description: "Add or Update the implementation status of a measure on a protect surface"}, protectSurfaceMeasureTools.Update)
-			mcp.AddTool(server, &mcp.Tool{Name: "removeMeasureFromProtectSurface", Description: "Remove a measure assignment from a protect surface"}, protectSurfaceMeasureTools.Remove)
+			tools.AddTool(server, &mcp.Tool{Name: "listProtectSurfaceMeasures", Description: "List measures assigned to a protect surface"}, protectSurfaceMeasureTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "updateProtectSurfaceMeasure", Description: "Add or Update the implementation status of a measure on a protect surface"}, protectSurfaceMeasureTools.Update)
+			tools.AddTool(server, &mcp.Tool{Name: "removeMeasureFromProtectSurface", Description: "Remove a measure assignment from a protect surface"}, protectSurfaceMeasureTools.Remove)
 
 			// Register tools - Transaction Flows
-			mcp.AddTool(server, &mcp.Tool{Name: "createTransactionFlow", Description: "Create a flow between two protect surfaces with mutual consensus"}, transactionFlowTools.CreateFlow)
-			mcp.AddTool(server, &mcp.Tool{Name: "createExternalFlow", Description: "Create a flow to/from outside the organization for a protect surface"}, transactionFlowTools.CreateExternalFlow)
-			mcp.AddTool(server, &mcp.Tool{Name: "listTransactionFlows", Description: "List all flows for a specific protect surface"}, transactionFlowTools.ListFlows)
-			mcp.AddTool(server, &mcp.Tool{Name: "deleteTransactionFlow", Description: "Delete a flow between two protect surfaces with mutual consensus"}, transactionFlowTools.DeleteFlow)
-			mcp.AddTool(server, &mcp.Tool{Name: "deleteExternalFlow", Description: "Delete an external flow (to/from outside) for a protect surface"}, transactionFlowTools.DeleteExternalFlow)
+			tools.AddTool(server, &mcp.Tool{Name: "createTransactionFlow", Description: "Create a flow between two protect surfaces with mutual consensus"}, transactionFlowTools.CreateFlow)
+			tools.AddTool(server, &mcp.Tool{Name: "createExternalFlow", Description: "Create a flow to/from outside the organization for a protect surface"}, transactionFlowTools.CreateExternalFlow)
+			tools.AddTool(server, &mcp.Tool{Name: "listTransactionFlows", Description: "List all flows for a specific protect surface"}, transactionFlowTools.ListFlows)
+			tools.AddTool(server, &mcp.Tool{Name: "deleteTransactionFlow", Description: "Delete a flow between two protect surfaces with mutual consensus"}, transactionFlowTools.DeleteFlow)
+			tools.AddTool(server, &mcp.Tool{Name: "deleteExternalFlow", Description: "Delete an external flow (to/from outside) for a protect surface"}, transactionFlowTools.DeleteExternalFlow)
 
 			// Register prompts
 			server.AddPrompt(&mcp.Prompt{
@@ -328,16 +328,16 @@ func main() {
 			caseTools := tools.NewCaseTools(effectiveClientManager)
 
 			// Register case tools
-			mcp.AddTool(server, &mcp.Tool{Name: "createCase", Description: "Create a new support case/ticket in the system. Required fields: id, subject, note, priority (1-4 where 1=highest), primary_contact_email, and case_type. Valid case types: 'securityincident' (security incident requiring immediate attention), 'incident' (service disruption or issue), 'change' (planned change requiring approval), 'standardchange' (pre-approved routine change), 'inforequest' (information or assistance request). It is wise to provide a friendly id for tracking, it is not the case-number that will be autogenerated."}, caseTools.Create)
-			mcp.AddTool(server, &mcp.Tool{Name: "getCases", Description: "Get all cases/tickets"}, caseTools.GetAll)
-			mcp.AddTool(server, &mcp.Tool{Name: "getCase", Description: "Get details of a case/ticket by its ID"}, caseTools.Get)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateCasePriority", Description: "Update the priority (1-4) of an existing case, where 1 is highest priority"}, caseTools.UpdatePriority)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateCasePrimaryContact", Description: "Update the primary contact email for an existing case"}, caseTools.UpdatePrimaryContact)
-			mcp.AddTool(server, &mcp.Tool{Name: "updateCaseSubject", Description: "Update the subject/title of an existing case"}, caseTools.UpdateSubject)
-			mcp.AddTool(server, &mcp.Tool{Name: "escalateCase", Description: "Escalate an existing case to higher priority attention"}, caseTools.Escalate)
-			mcp.AddTool(server, &mcp.Tool{Name: "deescalateCase", Description: "De-escalate an existing case back to normal handling"}, caseTools.Deescalate)
-			mcp.AddTool(server, &mcp.Tool{Name: "addNoteToCase", Description: "Add a note/comment to an existing case"}, caseTools.AddNote)
-			mcp.AddTool(server, &mcp.Tool{Name: "closeCase", Description: "Request to close a case. The case will be reviewed by an engineer and closed if no further work is needed."}, caseTools.Close)
+			tools.AddTool(server, &mcp.Tool{Name: "createCase", Description: "Create a new support case/ticket in the system. Required fields: id, subject, note, priority (1-4 where 1=highest), primary_contact_email, and case_type. Valid case types: 'securityincident' (security incident requiring immediate attention), 'incident' (service disruption or issue), 'change' (planned change requiring approval), 'standardchange' (pre-approved routine change), 'inforequest' (information or assistance request). It is wise to provide a friendly id for tracking, it is not the case-number that will be autogenerated."}, caseTools.Create)
+			tools.AddTool(server, &mcp.Tool{Name: "getCases", Description: "Get all cases/tickets"}, caseTools.GetAll)
+			tools.AddTool(server, &mcp.Tool{Name: "getCase", Description: "Get details of a case/ticket by its ID"}, caseTools.Get)
+			tools.AddTool(server, &mcp.Tool{Name: "updateCasePriority", Description: "Update the priority (1-4) of an existing case, where 1 is highest priority"}, caseTools.UpdatePriority)
+			tools.AddTool(server, &mcp.Tool{Name: "updateCasePrimaryContact", Description: "Update the primary contact email for an existing case"}, caseTools.UpdatePrimaryContact)
+			tools.AddTool(server, &mcp.Tool{Name: "updateCaseSubject", Description: "Update the subject/title of an existing case"}, caseTools.UpdateSubject)
+			tools.AddTool(server, &mcp.Tool{Name: "escalateCase", Description: "Escalate an existing case to higher priority attention"}, caseTools.Escalate)
+			tools.AddTool(server, &mcp.Tool{Name: "deescalateCase", Description: "De-escalate an existing case back to normal handling"}, caseTools.Deescalate)
+			tools.AddTool(server, &mcp.Tool{Name: "addNoteToCase", Description: "Add a note/comment to an existing case"}, caseTools.AddNote)
+			tools.AddTool(server, &mcp.Tool{Name: "closeCase", Description: "Request to close a case. The case will be reviewed by an engineer and closed if no further work is needed."}, caseTools.Close)
 
 			log.Println("Tickets domain enabled")
 		}

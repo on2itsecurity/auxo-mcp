@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.3",
   "name": "auxo-mcp-server",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "display_name": "AUXO MCP Server",
   "description": "Access AUXO Zero Trust and Case Management from Claude",
   "author": {
