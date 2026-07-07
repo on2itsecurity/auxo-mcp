@@ -147,6 +147,26 @@
       "description": "Delete an external flow for a protect surface"
     },
     {
+      "name": "getReadinessQuestions",
+      "description": "Get the Zero Trust readiness assessment questionnaire"
+    },
+    {
+      "name": "createReadinessAssessment",
+      "description": "Submit a completed Zero Trust readiness assessment"
+    },
+    {
+      "name": "listReadinessAssessments",
+      "description": "List all Zero Trust readiness assessments"
+    },
+    {
+      "name": "getReadinessAssessment",
+      "description": "Get full details of a readiness assessment by ID"
+    },
+    {
+      "name": "deleteReadinessAssessment",
+      "description": "Delete a readiness assessment by ID"
+    },
+    {
       "name": "createCase",
       "description": "Create a new support case/ticket"
     },

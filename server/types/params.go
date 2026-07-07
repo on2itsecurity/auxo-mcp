@@ -120,6 +120,30 @@ type FlowListParams struct {
 	ProtectSurfaceID string `json:"protect_surface_id,omitempty" jsonschema:"The ID of the protect surface to list flows for (required)"`
 }
 
+// ReadinessAnswerParams holds a single answer to a readiness assessment question
+type ReadinessAnswerParams struct {
+	QuestionID string `json:"question_id,omitempty" jsonschema:"The ID of the question being answered, as returned by getReadinessQuestions (required)"`
+	Actual     *int   `json:"actual,omitempty" jsonschema:"The current/actual maturity level on the 1-5 CMMI scale (required)"`
+	Goal       *int   `json:"goal,omitempty" jsonschema:"The target/ambition maturity level on the 1-5 CMMI scale (required)"`
+	Comment    string `json:"comment,omitempty" jsonschema:"Optional comment providing context for this answer"`
+	AnsweredBy string `json:"answered_by,omitempty" jsonschema:"Optional e-mail of the person who answered this specific question; defaults to the assessment-level answered_by"`
+}
+
+// CreateReadinessAssessmentParams for submitting a completed readiness assessment
+type CreateReadinessAssessmentParams struct {
+	AnsweredBy  string                  `json:"answered_by,omitempty" jsonschema:"E-mail of the user who answered the questions (required); used for every answer unless overridden per answer"`
+	Strategical []ReadinessAnswerParams `json:"strategical,omitempty" jsonschema:"Answers to ALL strategical questions from getReadinessQuestions"`
+	Tactical    []ReadinessAnswerParams `json:"tactical,omitempty" jsonschema:"Answers to ALL tactical questions from getReadinessQuestions"`
+	Operational []ReadinessAnswerParams `json:"operational,omitempty" jsonschema:"Answers to ALL operational questions from getReadinessQuestions"`
+	ScopeGoal   *int                    `json:"scope_goal,omitempty" jsonschema:"The scoping goal: the desired/ambitioned number of protect surfaces (required)"`
+	Version     *int                    `json:"version,omitempty" jsonschema:"Optional version of the question set that was answered; must match the current version from getReadinessQuestions"`
+}
+
+// ReadinessAssessmentIDParams for readiness assessment get and delete operations
+type ReadinessAssessmentIDParams struct {
+	ID string `json:"id,omitempty" jsonschema:"The ID of the readiness assessment (required)"`
+}
+
 // CaseParams for case/ticket operations (create, update, close, get)
 type CaseParams struct {
 	// For create and get operations

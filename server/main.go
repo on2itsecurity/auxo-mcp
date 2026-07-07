@@ -239,7 +239,9 @@ func main() {
 			measureTools := tools.NewMeasureTools(effectiveClientManager)
 			protectSurfaceMeasureTools := tools.NewProtectSurfaceMeasureTools(effectiveClientManager)
 			transactionFlowTools := tools.NewTransactionFlowTools(effectiveClientManager)
+			readinessTools := tools.NewReadinessTools(effectiveClientManager)
 			protectSurfacePrompts := prompts.NewProtectSurfacePrompts(effectiveClientManager)
+			readinessPrompts := prompts.NewReadinessPrompts(effectiveClientManager)
 
 			// Initialize resource handlers
 			resourceHandlers := resources.NewHandlers(effectiveClientManager)
@@ -282,6 +284,13 @@ func main() {
 			tools.AddTool(server, &mcp.Tool{Name: "deleteTransactionFlow", Description: "Delete a flow between two protect surfaces with mutual consensus"}, transactionFlowTools.DeleteFlow)
 			tools.AddTool(server, &mcp.Tool{Name: "deleteExternalFlow", Description: "Delete an external flow (to/from outside) for a protect surface"}, transactionFlowTools.DeleteExternalFlow)
 
+			// Register tools - Readiness Assessments
+			tools.AddTool(server, &mcp.Tool{Name: "getReadinessQuestions", Description: "Get the Zero Trust readiness assessment questionnaire: strategical, tactical and operational questions plus scoping. Every question is answered on a 1-5 CMMI maturity scale with an actual (current) and goal (ambition) level. Use this before creating an assessment."}, readinessTools.GetQuestions)
+			tools.AddTool(server, &mcp.Tool{Name: "createReadinessAssessment", Description: "Submit a completed Zero Trust readiness assessment. Requires an answer (actual and goal, 1-5 CMMI) for EVERY strategical, tactical and operational question from getReadinessQuestions, plus scope_goal (desired number of protect surfaces) and answered_by (e-mail of the user). Assessments cannot be edited after submission, so review the answers with the user first."}, readinessTools.Create)
+			tools.AddTool(server, &mcp.Tool{Name: "listReadinessAssessments", Description: "List all Zero Trust readiness assessments (id and timestamp)"}, readinessTools.List)
+			tools.AddTool(server, &mcp.Tool{Name: "getReadinessAssessment", Description: "Get full details (all answers) of a Zero Trust readiness assessment by its ID"}, readinessTools.Get)
+			tools.AddTool(server, &mcp.Tool{Name: "deleteReadinessAssessment", Description: "Delete a Zero Trust readiness assessment by its ID"}, readinessTools.Delete)
+
 			// Register prompts
 			server.AddPrompt(&mcp.Prompt{
 				Name:        "create-protect-surface-with-location-and-state",
@@ -310,6 +319,19 @@ func main() {
 					},
 				},
 			}, protectSurfacePrompts.CreateWithLocationAndState)
+
+			server.AddPrompt(&mcp.Prompt{
+				Name:        "run-readiness-assessment",
+				Title:       "Run Zero Trust Readiness Assessment",
+				Description: "An interactive interview that guides the user through the Zero Trust readiness assessment and submits the result",
+				Arguments: []*mcp.PromptArgument{
+					{
+						Name:        "answered_by",
+						Description: "E-mail address of the person answering the questions",
+						Required:    false,
+					},
+				},
+			}, readinessPrompts.RunAssessment)
 
 			// Register resources
 			server.AddResource(resourceHandlers.ProtectSurfacesResource(), resourceHandlers.ProtectSurfaces)
