@@ -78,7 +78,9 @@ jobs:
 
       - name: Build .mcpb extension
         run: |
-          chmod +x dist/*
+          # download-artifact does not preserve permission bits; restore them
+          # explicitly before packaging (build.sh verifies them after).
+          chmod 755 dist/*
           chmod +x extension/build.sh
           cd extension && ./build.sh --all
 

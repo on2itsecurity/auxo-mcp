@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/on2itsecurity/auxo-mcp/server/apps"
 	"github.com/on2itsecurity/auxo-mcp/server/client"
 	"github.com/on2itsecurity/auxo-mcp/server/config"
 	"github.com/on2itsecurity/auxo-mcp/server/prompts"
@@ -218,10 +219,13 @@ func main() {
 		// Create a new client manager for this effective configuration
 		effectiveClientManager := client.NewManager(effectiveCfg)
 
-		// Create server with explicit capabilities
+		// Create server with explicit capabilities. Setting Capabilities keeps
+		// logging disabled (prevents client-side setLevel errors in VS Code);
+		// tools/prompts/resources capabilities are still inferred automatically.
+		serverCapabilities := &mcp.ServerCapabilities{}
+		serverCapabilities.AddExtension(apps.UIExtensionID, nil) // MCP Apps (interactive UI)
 		serverOptions := &mcp.ServerOptions{
-			// Explicitly disable logging capabilities to prevent client-side setLevel errors
-			// This tells VS Code not to attempt logging/setLevel during initialization
+			Capabilities: serverCapabilities,
 		}
 
 		server := mcp.NewServer(&mcp.Implementation{
@@ -285,6 +289,15 @@ func main() {
 			tools.AddTool(server, &mcp.Tool{Name: "deleteExternalFlow", Description: "Delete an external flow (to/from outside) for a protect surface"}, transactionFlowTools.DeleteExternalFlow)
 
 			// Register tools - Readiness Assessments
+			// startReadinessAssessment is linked to an MCP App (interactive
+			// questionnaire) rendered by hosts that support the ui extension;
+			// other hosts fall back to the tool's text/structured content.
+			apps.RegisterReadinessApp(server)
+			tools.AddTool(server, &mcp.Tool{
+				Name:        "startReadinessAssessment",
+				Description: "Start a Zero Trust readiness assessment. In clients that support MCP Apps this opens an interactive questionnaire panel in which the user answers and submits the assessment themselves. In other clients it returns the questionnaire; interview the user and submit with createReadinessAssessment.",
+				Meta:        apps.ToolMeta(apps.ReadinessAppURI),
+			}, readinessTools.Start)
 			tools.AddTool(server, &mcp.Tool{Name: "getReadinessQuestions", Description: "Get the Zero Trust readiness assessment questionnaire: strategical, tactical and operational questions plus scoping. Every question is answered on a 1-5 CMMI maturity scale with an actual (current) and goal (ambition) level. Use this before creating an assessment."}, readinessTools.GetQuestions)
 			tools.AddTool(server, &mcp.Tool{Name: "createReadinessAssessment", Description: "Submit a completed Zero Trust readiness assessment. Requires an answer (actual and goal, 1-5 CMMI) for EVERY strategical, tactical and operational question from getReadinessQuestions, plus scope_goal (desired number of protect surfaces) and answered_by (e-mail of the user). Assessments cannot be edited after submission, so review the answers with the user first."}, readinessTools.Create)
 			tools.AddTool(server, &mcp.Tool{Name: "listReadinessAssessments", Description: "List all Zero Trust readiness assessments (id and timestamp)"}, readinessTools.List)

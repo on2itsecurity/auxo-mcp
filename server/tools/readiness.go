@@ -51,6 +51,39 @@ func (t *ReadinessTools) GetQuestions(ctx context.Context, req *mcp.CallToolRequ
 	}, nil, nil
 }
 
+// Start opens the interactive readiness assessment. In hosts that support MCP
+// Apps the linked ui:// resource is rendered and reads the questionnaire from
+// StructuredContent; everywhere else the text content instructs the model to
+// run the assessment conversationally.
+func (t *ReadinessTools) Start(ctx context.Context, req *mcp.CallToolRequest, args types.EmptyParams) (*mcp.CallToolResult, any, error) {
+	auxoClient, err := t.clientManager.CreateClient(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	questions, err := auxoClient.ZeroTrust.GetReadinessQuestions(ctx)
+	if err != nil {
+		return nil, nil, client.FriendlyError(err)
+	}
+
+	total := len(questions.Strategical) + len(questions.Tactical) + len(questions.Operational)
+	fallback := fmt.Sprintf(
+		"Readiness assessment started (%d questions: %d strategical, %d tactical, %d operational, plus scoping; question set version %d). "+
+			"If this client rendered an interactive questionnaire panel, the user completes and submits the assessment there - wait for the result and do not interview them in parallel. "+
+			"If no panel appeared, run the assessment conversationally: interview the user using the questions in structuredContent (each answered 1-5 CMMI with an actual and a goal level) and submit with createReadinessAssessment.",
+		total, len(questions.Strategical), len(questions.Tactical), len(questions.Operational), questions.Version)
+
+	content := []mcp.Content{
+		&mcp.TextContent{
+			Text: fallback,
+		}}
+
+	return &mcp.CallToolResult{
+		Content:           content,
+		StructuredContent: questions,
+	}, nil, nil
+}
+
 // List returns a lightweight summary of all readiness assessments
 func (t *ReadinessTools) List(ctx context.Context, req *mcp.CallToolRequest, args types.EmptyParams) (*mcp.CallToolResult, any, error) {
 	auxoClient, err := t.clientManager.CreateClient(ctx)

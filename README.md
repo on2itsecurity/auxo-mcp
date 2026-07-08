@@ -179,13 +179,16 @@ http://localhost:8080/sse?zt_token=TOKEN&ticket_token=TOKEN
 
 | Tool                         | Description                                                          |
 | ---------------------------- | -------------------------------------------------------------------- |
+| `startReadinessAssessment`   | Start an assessment — opens an interactive questionnaire (MCP App)   |
 | `getReadinessQuestions`      | Get the readiness questionnaire (strategical/tactical/operational)   |
 | `createReadinessAssessment`  | Submit a completed readiness assessment                              |
 | `listReadinessAssessments`   | List all readiness assessments                                       |
 | `getReadinessAssessment`     | Get full details of a readiness assessment by ID                     |
 | `deleteReadinessAssessment`  | Delete a readiness assessment by ID                                  |
 
-The `run-readiness-assessment` MCP prompt turns the assistant into an interviewer that guides you through the assessment (guided question-by-question, or a quick draft from a free-form description of your organization) and submits the result after your confirmation.
+In clients that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) (Claude Desktop, claude.ai), `startReadinessAssessment` renders an interactive ON2IT-branded questionnaire panel: answer each question with a current and ambition maturity level, review, submit, and get an instant gap analysis. In other clients the same tool falls back to a conversational interview.
+
+The `run-readiness-assessment` MCP prompt turns the assistant into an interviewer that guides you through the assessment (interactive panel where supported; otherwise guided question-by-question, or a quick draft from a free-form description of your organization) and submits the result after your confirmation.
 
 ### Case Management
 

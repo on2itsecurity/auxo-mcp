@@ -40,8 +40,10 @@ func (p *ReadinessPrompts) RunAssessment(ctx context.Context, req *mcp.GetPrompt
 
 ## How to run the assessment
 
-### Step 1: Fetch the questionnaire
-Call **getReadinessQuestions**. It returns questions in three dimensions (strategical, tactical, operational) plus a scoping question. Every question is answered on a 1-5 CMMI maturity scale with BOTH an "actual" (where we are today) and a "goal" (where we want to be).
+### Step 1: Start the assessment
+Call **startReadinessAssessment**. It returns questions in three dimensions (strategical, tactical, operational) plus a scoping question. Every question is answered on a 1-5 CMMI maturity scale with BOTH an "actual" (where we are today) and a "goal" (where we want to be).
+
+In clients that support interactive MCP Apps this also opens an interactive questionnaire panel. If that panel appeared, let me fill it in there - don't interview me in parallel; stay available for questions and once the panel reports the submitted result, continue with Step 6. If no panel appeared, run the conversational interview below.
 
 ### Step 2: Let me choose the pace
 Offer me two modes and respect my choice:

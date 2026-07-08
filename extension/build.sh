@@ -4,7 +4,8 @@ set -euo pipefail
 # Build AUXO MCP Server Desktop Extension (.mcpb)
 #
 # Prerequisites:
-#   - Compiled binaries in ../dist/
+#   - Go (binaries are always rebuilt from ../server; existing ../dist/
+#     binaries are only reused when Go is not installed)
 #   - npm (for mcpb CLI, optional - script can also create the ZIP directly)
 #
 # Usage:
@@ -50,26 +51,28 @@ case "${1:-}" in
     ;;
 esac
 
-# Build missing binaries locally if Go is available
-build_binary_if_missing() {
+# Always rebuild binaries so the bundle never packages stale ones; falls back
+# to an existing binary only when Go is not installed.
+build_binary() {
   local goos="$1" goarch="$2" output="$3"
-  if [ -f "$output" ]; then
-    return 0
-  fi
   if ! command -v go &>/dev/null; then
+    if [ -f "$output" ]; then
+      echo "Warning: Go not available, reusing existing $output"
+      return 0
+    fi
     echo "Warning: $output not found and Go not available to compile it"
     return 1
   fi
-  echo "Compiling $(basename "$output") locally..."
+  echo "Compiling $(basename "$output")..."
   mkdir -p "$DIST_DIR"
   (cd "$PROJECT_DIR/server" && CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -o "$output" .)
 }
 
 for arch in $DARWIN_ARCHS; do
-  build_binary_if_missing darwin "$arch" "$DIST_DIR/auxo-mcp-server-darwin-${arch}"
+  build_binary darwin "$arch" "$DIST_DIR/auxo-mcp-server-darwin-${arch}"
 done
 for arch in $WINDOWS_ARCHS; do
-  build_binary_if_missing windows "$arch" "$DIST_DIR/auxo-mcp-server-windows-${arch}.exe"
+  build_binary windows "$arch" "$DIST_DIR/auxo-mcp-server-windows-${arch}.exe"
 done
 
 # Check if we can create a universal macOS binary
@@ -105,12 +108,37 @@ for arch in $WINDOWS_ARCHS; do
   fi
 done
 
-# Ensure binaries are executable
-chmod +x "$BUILD_DIR/bin/"* 2>/dev/null || true
+# Binaries must be executable inside the archive (zip preserves these bits);
+# upstream steps like CI artifact download are known to strip them.
+chmod 755 "$BUILD_DIR/bin/"* 2>/dev/null || {
+  echo "ERROR: no binaries in $BUILD_DIR/bin to package" >&2
+  exit 1
+}
 
 # Create .mcpb (ZIP archive)
 rm -f "$OUTPUT"
 (cd "$BUILD_DIR" && zip -r "$OUTPUT" .)
+
+# Verify the packaged binaries kept their executable bit; a bundle without it
+# installs fine but fails at spawn time with "Permission denied".
+if ! command -v zipinfo &>/dev/null; then
+  echo "ERROR: zipinfo not available to verify bundle permissions" >&2
+  exit 1
+fi
+for entry in bin/auxo-mcp-server bin/auxo-mcp-server.exe; do
+  perms="$(zipinfo "$OUTPUT" "$entry" 2>/dev/null | awk 'NR==1 {print $1}')" || true
+  if [ -z "$perms" ]; then
+    continue  # entry not in this bundle variant (e.g. --darwin-only)
+  fi
+  case "$perms" in
+    -??x*) ;;
+    *)
+      echo "ERROR: $entry is packaged without its executable bit ($perms)." >&2
+      echo "The extension would fail with 'Failed to spawn process: Permission denied'." >&2
+      exit 1
+      ;;
+  esac
+done
 
 echo ""
 echo "Built: $OUTPUT"
