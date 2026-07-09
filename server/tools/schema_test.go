@@ -92,6 +92,17 @@ func TestInputSchemaHasNoNullTypeArrays(t *testing.T) {
 				"ids":       "array",
 			},
 		},
+		{
+			name:   "CreateReadinessAssessmentParams",
+			schema: InputSchemaFor[types.CreateReadinessAssessmentParams],
+			want: map[string]string{
+				"strategical": "array",
+				"tactical":    "array",
+				"operational": "array",
+				"scope_goal":  "integer",
+				"version":     "integer",
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -140,6 +151,20 @@ func TestTypedArgumentsAccepted(t *testing.T) {
 			"in_zero_trust_focus": false,
 			"data_tags": ["PII", "PCI"],
 			"compliance_tags": ["GDPR"]
+		}`
+		if err := validate(t, resolved, args); err != nil {
+			t.Fatalf("typed arguments were rejected: %v", err)
+		}
+	})
+
+	t.Run("createReadinessAssessment typed nested answers", func(t *testing.T) {
+		resolved := resolveInput[types.CreateReadinessAssessmentParams](t)
+		args := `{
+			"answered_by": "user@example.com",
+			"strategical": [{"question_id": "s1", "actual": 2, "goal": 4, "comment": "ad hoc today"}],
+			"tactical": [{"question_id": "t1", "actual": 3, "goal": 3}],
+			"operational": [{"question_id": "o1", "actual": 1, "goal": 5}],
+			"scope_goal": 12
 		}`
 		if err := validate(t, resolved, args); err != nil {
 			t.Fatalf("typed arguments were rejected: %v", err)

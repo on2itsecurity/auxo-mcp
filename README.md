@@ -4,7 +4,7 @@ An [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server that e
 
 ## Features
 
-**Zero Trust** — manage protect surfaces, locations, states, contacts, assets, security measures, and transaction flows.
+**Zero Trust** — manage protect surfaces, locations, states, contacts, assets, security measures, and transaction flows. Run interactive Zero Trust readiness assessments.
 
 **Case Management** — create, update, escalate, and close support cases/tickets.
 
@@ -174,6 +174,21 @@ http://localhost:8080/sse?zt_token=TOKEN&ticket_token=TOKEN
 | `listTransactionFlows`            | List all flows for a protect surface           |
 | `deleteTransactionFlow`           | Delete a flow between two protect surfaces     |
 | `deleteExternalFlow`              | Delete an external flow                        |
+
+### Readiness Assessments
+
+| Tool                         | Description                                                          |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `startReadinessAssessment`   | Start an assessment — opens an interactive questionnaire (MCP App)   |
+| `getReadinessQuestions`      | Get the readiness questionnaire (strategical/tactical/operational)   |
+| `createReadinessAssessment`  | Submit a completed readiness assessment                              |
+| `listReadinessAssessments`   | List all readiness assessments                                       |
+| `getReadinessAssessment`     | Get full details of a readiness assessment by ID                     |
+| `deleteReadinessAssessment`  | Delete a readiness assessment by ID                                  |
+
+In clients that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) (Claude Desktop, claude.ai), `startReadinessAssessment` renders an interactive ON2IT-branded questionnaire panel: answer each question with a current and ambition maturity level, review, submit, and get an instant gap analysis. In other clients the same tool falls back to a conversational interview.
+
+The `run-readiness-assessment` MCP prompt turns the assistant into an interviewer that guides you through the assessment (interactive panel where supported; otherwise guided question-by-question, or a quick draft from a free-form description of your organization) and submits the result after your confirmation.
 
 ### Case Management
 
