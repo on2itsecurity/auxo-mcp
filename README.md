@@ -25,6 +25,9 @@ You only need the token(s) for the domain(s) you intend to use; the server autom
 
 Download the latest `auxo-mcp-server.mcpb` from the [Releases](../../releases/latest) page and double-click it, or drag it into Claude Desktop settings. Claude will prompt you for your API tokens during setup.
 
+> [!NOTE]
+> On macOS the extension manifest launches the bundled binary through `/bin/sh -c 'chmod +x "$0" 2>/dev/null; exec "$0"'`. This is a deliberate workaround: Claude Desktop's extension extractor does not preserve the executable bit on bundled binaries, so the wrapper restores it before exec'ing the server. It runs no other commands and touches no files outside the extension directory.
+
 ### Pre-built Binaries
 
 Download the binary for your platform from the [Releases](../../releases/latest) page:
@@ -195,6 +198,7 @@ The `run-readiness-assessment` MCP prompt turns the assistant into an interviewe
 | Tool                       | Description                                    |
 | -------------------------- | ---------------------------------------------- |
 | `createCase`               | Create a new support case/ticket               |
+| `getCases`                 | List all cases/tickets                         |
 | `getCase`                  | Get case details by ID                         |
 | `updateCasePriority`       | Update case priority (1-4, where 1 is highest) |
 | `updateCasePrimaryContact` | Update the primary contact email               |
@@ -203,6 +207,18 @@ The `run-readiness-assessment` MCP prompt turns the assistant into an interviewe
 | `deescalateCase`           | De-escalate to normal handling                 |
 | `addNoteToCase`            | Add a note/comment to a case                   |
 | `closeCase`                | Request to close a case                        |
+
+## Example Prompts
+
+Some prompts to get started:
+
+- *"List all protect surfaces and show me which ones are in Zero Trust focus."*
+- *"Run a Zero Trust readiness assessment for my organization."*
+- *"Create a priority 3 information request case titled 'Firewall rule review' for jane.doe@example.com, asking ON2IT to review the outbound rules on the DMZ segment."*
+
+## Privacy
+
+The server communicates only with the configured AUXO API endpoint (`api.on2it.net` by default) and sends only the data needed to execute the requested tool call. It does not collect telemetry, does not read conversation history, and stores nothing locally; API tokens are handled by your MCP client (Claude Desktop stores them in the OS keychain). See the [ON2IT Privacy & Cookie Notice](https://on2it.net/privacy/) for how ON2IT processes data on its platform.
 
 ## License
 
