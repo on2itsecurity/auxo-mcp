@@ -5,8 +5,29 @@
   "display_name": "AUXO MCP Server",
   "description": "Access AUXO Zero Trust and Case Management from Claude",
   "author": {
-    "name": "ON2IT"
+    "name": "ON2IT",
+    "email": "support@on2it.net",
+    "url": "https://on2it.net"
   },
+  "homepage": "https://on2it.net",
+  "documentation": "https://github.com/on2itsecurity/auxo-mcp#readme",
+  "support": "https://github.com/on2itsecurity/auxo-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/on2itsecurity/auxo-mcp"
+  },
+  "license": "MIT",
+  "privacy_policies": [
+    "https://on2it.net/privacy/"
+  ],
+  "keywords": [
+    "zero-trust",
+    "security",
+    "case-management",
+    "protect-surfaces",
+    "on2it",
+    "auxo"
+  ],
   "icon": "icon.png",
   "server": {
     "type": "binary",
@@ -178,6 +199,10 @@
     {
       "name": "createCase",
       "description": "Create a new support case/ticket"
+    },
+    {
+      "name": "getCases",
+      "description": "List all cases/tickets"
     },
     {
       "name": "getCase",
