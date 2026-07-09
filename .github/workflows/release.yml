@@ -70,12 +70,6 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - name: Set manifest version from tag
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          jq --arg v "$VERSION" '.version = $v' extension/manifest.json > extension/manifest.tmp
-          mv extension/manifest.tmp extension/manifest.json
-
       - name: Build .mcpb extension
         run: |
           # download-artifact does not preserve permission bits; restore them
