@@ -12,6 +12,15 @@ set -euo pipefail
 #   ./build.sh                  # Build for macOS ARM64 + Windows AMD64 (most common)
 #   ./build.sh --all            # Build with all platform binaries
 #   ./build.sh --darwin-only    # Build for macOS only
+#   ./build.sh --version 1.2.3  # Override the bundled manifest version
+#
+# The version stamped into the bundled manifest is resolved in this order:
+#   1. --version <v>  or  $MCPB_VERSION            (explicit override)
+#   2. $GITHUB_REF_NAME when it is a v* tag        (release builds in CI)
+#   3. git describe                                (local dev builds)
+#   4. the version already committed in manifest.json + "-dev" (last resort)
+# The committed manifest.json is never modified; the version is only written
+# into the copy inside the build directory that gets packaged.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -19,12 +28,75 @@ DIST_DIR="$PROJECT_DIR/dist"
 BUILD_DIR="$SCRIPT_DIR/build"
 OUTPUT="$SCRIPT_DIR/auxo-mcp-server.mcpb"
 
+# Parse arguments: a platform selector (--all/--darwin-only) and/or --version.
+PLATFORM=""
+VERSION_OVERRIDE="${MCPB_VERSION:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --all|--darwin-only)
+      PLATFORM="$1"
+      ;;
+    --version)
+      shift
+      VERSION_OVERRIDE="${1:-}"
+      [ -n "$VERSION_OVERRIDE" ] || { echo "ERROR: --version requires a value" >&2; exit 1; }
+      ;;
+    --version=*)
+      VERSION_OVERRIDE="${1#--version=}"
+      ;;
+    *)
+      echo "ERROR: unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+# Resolve the version to stamp into the bundled manifest (see priority above).
+resolve_version() {
+  if [ -n "$VERSION_OVERRIDE" ]; then
+    # Accept a leading "v" from tags/flags but store the bare semver.
+    echo "${VERSION_OVERRIDE#v}"
+    return
+  fi
+  if [ -n "${GITHUB_REF_NAME:-}" ] && [ "${GITHUB_REF_NAME#v}" != "$GITHUB_REF_NAME" ]; then
+    echo "${GITHUB_REF_NAME#v}"
+    return
+  fi
+  # Local dev build: derive a unique, semver-valid prerelease from git so every
+  # build is traceable to a commit, e.g. 1.6.0-dev.42.gabc1234[.dirty], where
+  # the number is the total commit count (a monotonic build ordinal), gSHA is
+  # the current commit, and .dirty marks an uncommitted working tree.
+  if command -v git &>/dev/null && git -C "$SCRIPT_DIR" rev-parse --git-dir &>/dev/null; then
+    local base_tag commits sha suffix
+    base_tag="$(git -C "$SCRIPT_DIR" describe --tags --abbrev=0 2>/dev/null || true)"
+    base_tag="${base_tag#v}"
+    [ -n "$base_tag" ] || base_tag="0.0.0"
+    sha="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    commits="$(git -C "$SCRIPT_DIR" rev-list --count HEAD 2>/dev/null || echo 0)"
+    suffix=""
+    if ! git -C "$SCRIPT_DIR" diff --quiet HEAD 2>/dev/null; then
+      suffix=".dirty"
+    fi
+    echo "${base_tag}-dev.${commits}.g${sha}${suffix}"
+    return
+  fi
+  # No git available: fall back to whatever is committed, marked as a dev build.
+  local committed
+  committed="$(jq -r '.version' "$SCRIPT_DIR/manifest.json")"
+  echo "${committed}-dev"
+}
+
+VERSION="$(resolve_version)"
+echo "Bundled manifest version: $VERSION"
+
 # Clean previous build
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/bin"
 
-# Copy manifest and icon
-cp "$SCRIPT_DIR/manifest.json" "$BUILD_DIR/"
+# Copy manifest and icon, stamping the resolved version into the packaged copy
+# (the committed manifest.json is left untouched).
+jq --arg v "$VERSION" '.version = $v' "$SCRIPT_DIR/manifest.json" > "$BUILD_DIR/manifest.json"
 if [ -f "$SCRIPT_DIR/icon.png" ]; then
   cp "$SCRIPT_DIR/icon.png" "$BUILD_DIR/"
   echo "Icon included: icon.png"
@@ -33,7 +105,7 @@ else
 fi
 
 # Determine which binaries to include
-case "${1:-}" in
+case "$PLATFORM" in
   --all)
     echo "Building with all platform binaries..."
     DARWIN_ARCHS="amd64 arm64"
