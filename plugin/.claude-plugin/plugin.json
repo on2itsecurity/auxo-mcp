@@ -1,0 +1,45 @@
+{
+  "name": "auxo",
+  "displayName": "AUXO by ON2IT",
+  "version": "0.2.0",
+  "description": "Manage AUXO Zero Trust protect surfaces, measures, transaction flows, readiness assessments and support cases from Claude through the local AUXO MCP server.",
+  "author": {
+    "name": "ON2IT",
+    "url": "https://on2it.net"
+  },
+  "homepage": "https://on2it.net",
+  "repository": "https://github.com/on2itsecurity/auxo-mcp",
+  "license": "MIT",
+  "keywords": [
+    "zero-trust",
+    "security",
+    "case-management",
+    "protect-surfaces",
+    "on2it",
+    "auxo",
+    "mcp"
+  ],
+  "userConfig": {
+    "zt_token": {
+      "type": "string",
+      "title": "Zero Trust API Token",
+      "description": "Your AUXO Zero Trust API token. Providing this token automatically enables Zero Trust features (protect surfaces, locations, states, measures, etc.).",
+      "sensitive": true,
+      "required": false
+    },
+    "ticket_token": {
+      "type": "string",
+      "title": "Tickets API Token",
+      "description": "Your AUXO Tickets/Case Management API token. Providing this token automatically enables case management features.",
+      "sensitive": true,
+      "required": false
+    },
+    "api_url": {
+      "type": "string",
+      "title": "API URL",
+      "description": "AUXO API endpoint. Leave empty to use the default (api.on2it.net).",
+      "default": "api.on2it.net",
+      "required": false
+    }
+  }
+}

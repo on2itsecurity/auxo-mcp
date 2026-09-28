@@ -1,0 +1,38 @@
+{
+  "name": "@on2it/auxo-mcp",
+  "version": "0.0.0-dev",
+  "description": "AUXO MCP server by ON2IT: Zero Trust and case management tools for MCP clients such as Claude.",
+  "license": "MIT",
+  "author": "ON2IT",
+  "homepage": "https://github.com/on2itsecurity/auxo-mcp#readme",
+  "bugs": "https://github.com/on2itsecurity/auxo-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/on2itsecurity/auxo-mcp.git",
+    "directory": "npm/auxo-mcp"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "auxo",
+    "on2it",
+    "zero-trust",
+    "claude"
+  ],
+  "bin": {
+    "auxo-mcp": "bin/auxo-mcp.js"
+  },
+  "files": [
+    "bin/auxo-mcp.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "@on2it/auxo-mcp-darwin-arm64": "0.0.0-dev",
+    "@on2it/auxo-mcp-darwin-x64": "0.0.0-dev",
+    "@on2it/auxo-mcp-linux-arm64": "0.0.0-dev",
+    "@on2it/auxo-mcp-linux-x64": "0.0.0-dev",
+    "@on2it/auxo-mcp-win32-x64": "0.0.0-dev"
+  }
+}

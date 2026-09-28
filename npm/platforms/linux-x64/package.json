@@ -1,0 +1,22 @@
+{
+  "name": "@on2it/auxo-mcp-linux-x64",
+  "version": "0.0.0-dev",
+  "description": "AUXO MCP server binary for linux x64. Installed automatically by @on2it/auxo-mcp; do not install directly.",
+  "license": "MIT",
+  "author": "ON2IT",
+  "homepage": "https://github.com/on2itsecurity/auxo-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/on2itsecurity/auxo-mcp.git",
+    "directory": "npm/platforms/linux-x64"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/auxo-mcp-server"
+  ]
+}
