@@ -83,6 +83,59 @@ jobs:
           name: mcpb
           path: extension/auxo-mcp-server.mcpb
 
+  npm:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing (OIDC) and provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing needs npm 11.5.1 or later.
+      - name: Update npm
+        run: npm install -g npm@11
+
+      - name: Check versions match the tag
+        run: scripts/check-versions.sh "${GITHUB_REF_NAME}"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Prepare npm packages
+        run: scripts/npm-prepare.sh "${GITHUB_REF_NAME#v}" dist
+
+      # Platform packages first, the launcher last, so the launcher never
+      # points at platform packages that are not on the registry yet. A
+      # version that is already published is skipped, so a re-run succeeds.
+      # Authentication uses trusted publishing when it is configured for the
+      # package; otherwise npm falls back to the NPM_TOKEN secret, which is
+      # needed for the very first publish (see npm/README.md).
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG_ARGS=()
+          case "$VERSION" in *-*) TAG_ARGS=(--tag next) ;; esac
+          for dir in npm/platforms/* npm/auxo-mcp; do
+            name="$(node -p "require('./$dir/package.json').name")"
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "Skipping $name@$VERSION: already published"
+              continue
+            fi
+            echo "Publishing $name@$VERSION"
+            (cd "$dir" && npm publish --access public --provenance "${TAG_ARGS[@]}")
+          done
+
   container:
     runs-on: ubuntu-latest
     steps:
