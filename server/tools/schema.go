@@ -96,8 +96,12 @@ func stripNullType(s *jsonschema.Schema) {
 // AddTool registers a typed tool on server, exactly like mcp.AddTool, except
 // that the reflected input schema has its nullable "type" arrays collapsed to
 // single types (see InputSchemaFor). If the caller already supplied an explicit
-// InputSchema on t, it is respected as-is.
+// InputSchema on t, it is respected as-is. A missing top-level Title is copied
+// from Annotations.Title, since some clients read only one of the two.
 func AddTool[In, Out any](server *mcp.Server, t *mcp.Tool, h mcp.ToolHandlerFor[In, Out]) {
+	if t.Title == "" && t.Annotations != nil {
+		t.Title = t.Annotations.Title
+	}
 	if t.InputSchema == nil {
 		schema, err := InputSchemaFor[In]()
 		if err != nil {

@@ -1,0 +1,16 @@
+{
+  "name": "on2it",
+  "owner": {
+    "name": "ON2IT",
+    "url": "https://on2it.net"
+  },
+  "description": "ON2IT plugins for Claude, including the AUXO Zero Trust and case management plugin.",
+  "plugins": [
+    {
+      "name": "auxo",
+      "source": "./plugin",
+      "description": "AUXO Zero Trust and case management tools from ON2IT, through the local AUXO MCP server.",
+      "category": "security"
+    }
+  ]
+}

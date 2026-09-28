@@ -131,6 +131,174 @@ var (
 	buildTime = "unknown" // Build timestamp
 )
 
+// newServer creates and configures a server instance for the effective
+// configuration, registering the tools of every enabled domain.
+func newServer(effectiveCfg *config.Config) *mcp.Server {
+	// Create a new client manager for this effective configuration
+	effectiveClientManager := client.NewManager(effectiveCfg)
+
+	// Create server with explicit capabilities. Setting Capabilities keeps
+	// logging disabled (prevents client-side setLevel errors in VS Code);
+	// tools/prompts/resources capabilities are still inferred automatically.
+	serverCapabilities := &mcp.ServerCapabilities{}
+	serverCapabilities.AddExtension(apps.UIExtensionID, nil) // MCP Apps (interactive UI)
+	serverOptions := &mcp.ServerOptions{
+		Capabilities: serverCapabilities,
+	}
+
+	server := mcp.NewServer(&mcp.Implementation{
+		Name:    "AUXO MCP Server",
+		Version: version},
+		serverOptions)
+
+	// Initialize and register Zero Trust tools (only if enabled)
+	if effectiveCfg.EnableZeroTrust {
+		protectSurfaceTools := tools.NewProtectSurfaceTools(effectiveClientManager)
+		locationTools := tools.NewLocationTools(effectiveClientManager)
+		stateTools := tools.NewStateTools(effectiveClientManager)
+		contactTools := tools.NewContactTools(effectiveClientManager)
+		assetTools := tools.NewAssetTools(effectiveClientManager)
+		measureTools := tools.NewMeasureTools(effectiveClientManager)
+		protectSurfaceMeasureTools := tools.NewProtectSurfaceMeasureTools(effectiveClientManager)
+		transactionFlowTools := tools.NewTransactionFlowTools(effectiveClientManager)
+		readinessTools := tools.NewReadinessTools(effectiveClientManager)
+		protectSurfacePrompts := prompts.NewProtectSurfacePrompts(effectiveClientManager)
+		readinessPrompts := prompts.NewReadinessPrompts(effectiveClientManager)
+
+		// Initialize resource handlers
+		resourceHandlers := resources.NewHandlers(effectiveClientManager)
+
+		// Register tools - Protect Surfaces
+		tools.AddTool(server, &mcp.Tool{Name: "createProtectSurface", Description: "Create a new protect surface", Annotations: tools.WriteAnnotations("Create Protect Surface", false, false)}, protectSurfaceTools.Create)
+		tools.AddTool(server, &mcp.Tool{Name: "listProtectSurfaces", Description: "List Protect Surfaces, returning a lightweight summary (id, name, relevance) for each. All filter parameters are optional; with none supplied, every protect surface is returned. When multiple filters are supplied, all conditions must match (AND).", Annotations: tools.ReadOnlyAnnotations("List Protect Surfaces")}, protectSurfaceTools.List)
+		tools.AddTool(server, &mcp.Tool{Name: "getProtectSurface", Description: "Get full details of a protect surface by its ID", Annotations: tools.ReadOnlyAnnotations("Get Protect Surface")}, protectSurfaceTools.Get)
+		tools.AddTool(server, &mcp.Tool{Name: "updateProtectSurface", Description: "Update an existing protect surface", Annotations: tools.WriteAnnotations("Update Protect Surface", true, true)}, protectSurfaceTools.Update)
+		tools.AddTool(server, &mcp.Tool{Name: "deleteProtectSurface", Description: "Delete one or more protect surfaces", Annotations: tools.WriteAnnotations("Delete Protect Surfaces", true, true)}, protectSurfaceTools.Delete)
+
+		// Register tools - Locations
+		tools.AddTool(server, &mcp.Tool{Name: "createLocation", Description: "Create a new location", Annotations: tools.WriteAnnotations("Create Location", false, false)}, locationTools.Create)
+		tools.AddTool(server, &mcp.Tool{Name: "listLocations", Description: "Get All Locations", Annotations: tools.ReadOnlyAnnotations("List Locations")}, locationTools.List)
+		tools.AddTool(server, &mcp.Tool{Name: "updateLocation", Description: "Update an existing location", Annotations: tools.WriteAnnotations("Update Location", true, true)}, locationTools.Update)
+		tools.AddTool(server, &mcp.Tool{Name: "deleteLocation", Description: "Delete one or more locations", Annotations: tools.WriteAnnotations("Delete Locations", true, true)}, locationTools.Delete)
+
+		// Register tools - States
+		tools.AddTool(server, &mcp.Tool{Name: "createState", Description: "Create a new state", Annotations: tools.WriteAnnotations("Create State", false, false)}, stateTools.Create)
+		tools.AddTool(server, &mcp.Tool{Name: "listStates", Description: "Get All States", Annotations: tools.ReadOnlyAnnotations("List States")}, stateTools.List)
+		tools.AddTool(server, &mcp.Tool{Name: "updateState", Description: "Update an existing state", Annotations: tools.WriteAnnotations("Update State", true, true)}, stateTools.Update)
+		tools.AddTool(server, &mcp.Tool{Name: "deleteState", Description: "Delete one or more states", Annotations: tools.WriteAnnotations("Delete States", true, true)}, stateTools.Delete)
+
+		// Register tools - Contacts & Assets
+		tools.AddTool(server, &mcp.Tool{Name: "listContacts", Description: "Get All Contacts", Annotations: tools.ReadOnlyAnnotations("List Contacts")}, contactTools.List)
+		tools.AddTool(server, &mcp.Tool{Name: "listAssets", Description: "Get All Assets", Annotations: tools.ReadOnlyAnnotations("List Assets")}, assetTools.List)
+
+		// Register tools - Measures
+		tools.AddTool(server, &mcp.Tool{Name: "listMeasures", Description: "List/search measures from the AUXO catalog. Filters: 'id' for exact measure ID lookup (e.g. 'ztmm-1.1'), 'category' for exact group/category match, 'search_query' for case-insensitive text search across name, caption and explanation. Without filters returns all measures. There is no framework filter; framework mappings are included in each measure's data.", Annotations: tools.ReadOnlyAnnotations("List Security Measures")}, measureTools.List)
+
+		// Register tools - Protect Surface Measures
+		tools.AddTool(server, &mcp.Tool{Name: "listProtectSurfaceMeasures", Description: "List measures assigned to a protect surface", Annotations: tools.ReadOnlyAnnotations("List Protect Surface Measures")}, protectSurfaceMeasureTools.List)
+		tools.AddTool(server, &mcp.Tool{Name: "updateProtectSurfaceMeasure", Description: "Add or Update the implementation status of a measure on a protect surface", Annotations: tools.WriteAnnotations("Update Protect Surface Measure", true, true)}, protectSurfaceMeasureTools.Update)
+		tools.AddTool(server, &mcp.Tool{Name: "removeMeasureFromProtectSurface", Description: "Remove a measure assignment from a protect surface", Annotations: tools.WriteAnnotations("Remove Measure from Protect Surface", true, true)}, protectSurfaceMeasureTools.Remove)
+
+		// Register tools - Transaction Flows
+		tools.AddTool(server, &mcp.Tool{Name: "createTransactionFlow", Description: "Create a flow between two protect surfaces with mutual consensus", Annotations: tools.WriteAnnotations("Create Transaction Flow", false, false)}, transactionFlowTools.CreateFlow)
+		tools.AddTool(server, &mcp.Tool{Name: "createExternalFlow", Description: "Create a flow to/from outside the organization for a protect surface", Annotations: tools.WriteAnnotations("Create External Flow", false, false)}, transactionFlowTools.CreateExternalFlow)
+		tools.AddTool(server, &mcp.Tool{Name: "listTransactionFlows", Description: "List all flows for a specific protect surface", Annotations: tools.ReadOnlyAnnotations("List Transaction Flows")}, transactionFlowTools.ListFlows)
+		tools.AddTool(server, &mcp.Tool{Name: "deleteTransactionFlow", Description: "Delete a flow between two protect surfaces with mutual consensus", Annotations: tools.WriteAnnotations("Delete Transaction Flow", true, true)}, transactionFlowTools.DeleteFlow)
+		tools.AddTool(server, &mcp.Tool{Name: "deleteExternalFlow", Description: "Delete an external flow (to/from outside) for a protect surface", Annotations: tools.WriteAnnotations("Delete External Flow", true, true)}, transactionFlowTools.DeleteExternalFlow)
+
+		// Register tools - Readiness Assessments
+		// startReadinessAssessment is linked to an MCP App (interactive
+		// questionnaire) rendered by hosts that support the ui extension;
+		// other hosts fall back to the tool's text/structured content.
+		apps.RegisterReadinessApp(server)
+		tools.AddTool(server, &mcp.Tool{
+			Name:        "startReadinessAssessment",
+			Description: "Start a Zero Trust readiness assessment. In clients that support MCP Apps this opens an interactive questionnaire panel in which the user answers and submits the assessment themselves. In other clients it returns the questionnaire; interview the user and submit with createReadinessAssessment.",
+			Meta:        apps.ToolMeta(apps.ReadinessAppURI),
+			Annotations: tools.ReadOnlyAnnotations("Start Readiness Assessment"),
+		}, readinessTools.Start)
+		tools.AddTool(server, &mcp.Tool{Name: "getReadinessQuestions", Description: "Get the Zero Trust readiness assessment questionnaire: strategical, tactical and operational questions plus scoping. Every question is answered on a 1-5 CMMI maturity scale with an actual (current) and goal (ambition) level. Use this before creating an assessment.", Annotations: tools.ReadOnlyAnnotations("Get Readiness Questions")}, readinessTools.GetQuestions)
+		tools.AddTool(server, &mcp.Tool{Name: "createReadinessAssessment", Description: "Submit a completed Zero Trust readiness assessment. Requires an answer (actual and goal, 1-5 CMMI) for EVERY strategical, tactical and operational question from getReadinessQuestions, plus scope_goal (desired number of protect surfaces) and answered_by (e-mail of the user). Assessments cannot be edited after submission, so review the answers with the user first.", Annotations: tools.WriteAnnotations("Submit Readiness Assessment", false, false)}, readinessTools.Create)
+		tools.AddTool(server, &mcp.Tool{Name: "listReadinessAssessments", Description: "List all Zero Trust readiness assessments (id and timestamp)", Annotations: tools.ReadOnlyAnnotations("List Readiness Assessments")}, readinessTools.List)
+		tools.AddTool(server, &mcp.Tool{Name: "getReadinessAssessment", Description: "Get full details (all answers) of a Zero Trust readiness assessment by its ID", Annotations: tools.ReadOnlyAnnotations("Get Readiness Assessment")}, readinessTools.Get)
+		tools.AddTool(server, &mcp.Tool{Name: "deleteReadinessAssessment", Description: "Delete a Zero Trust readiness assessment by its ID", Annotations: tools.WriteAnnotations("Delete Readiness Assessment", true, true)}, readinessTools.Delete)
+
+		// Register prompts
+		server.AddPrompt(&mcp.Prompt{
+			Name:        "create-protect-surface-with-location-and-state",
+			Title:       "Create Protect Surface with Location and State",
+			Description: "A comprehensive guide for creating a protect surface along with its associated location and state",
+			Arguments: []*mcp.PromptArgument{
+				{
+					Name:        "protect_surface_name",
+					Description: "Name for the protect surface",
+					Required:    false,
+				},
+				{
+					Name:        "location_name",
+					Description: "Name for the location",
+					Required:    false,
+				},
+				{
+					Name:        "content_type",
+					Description: "Type of content (ipv4, ipv6, azure_cloud, aws_cloud, gcp_cloud, container, hostname, user_identity)",
+					Required:    false,
+				},
+				{
+					Name:        "content",
+					Description: "Comma-separated content values",
+					Required:    false,
+				},
+			},
+		}, protectSurfacePrompts.CreateWithLocationAndState)
+
+		server.AddPrompt(&mcp.Prompt{
+			Name:        "run-readiness-assessment",
+			Title:       "Run Zero Trust Readiness Assessment",
+			Description: "An interactive interview that guides the user through the Zero Trust readiness assessment and submits the result",
+			Arguments: []*mcp.PromptArgument{
+				{
+					Name:        "answered_by",
+					Description: "E-mail address of the person answering the questions",
+					Required:    false,
+				},
+			},
+		}, readinessPrompts.RunAssessment)
+
+		// Register resources
+		server.AddResource(resourceHandlers.ProtectSurfacesResource(), resourceHandlers.ProtectSurfaces)
+		server.AddResource(resourceHandlers.ContactsResource(), resourceHandlers.Contacts)
+		server.AddResource(resourceHandlers.LocationsResource(), resourceHandlers.Locations)
+		server.AddResource(resourceHandlers.StatesResource(), resourceHandlers.States)
+		server.AddResource(resourceHandlers.AssetsResource(), resourceHandlers.Assets)
+		server.AddResource(resourceHandlers.TransactionFlowsResource(), resourceHandlers.TransactionFlows)
+		server.AddResource(resourceHandlers.MeasuresResource(), resourceHandlers.Measures)
+
+		log.Println("Zero Trust domain enabled")
+	}
+
+	// Initialize and register Tickets tools (only if enabled)
+	if effectiveCfg.EnableTickets {
+		caseTools := tools.NewCaseTools(effectiveClientManager)
+
+		// Register case tools
+		tools.AddTool(server, &mcp.Tool{Name: "createCase", Description: "Create a new support case/ticket in the system. Required fields: id, subject, note, priority (1-4 where 1=highest), primary_contact_email, and case_type. Valid case types: 'securityincident' (security incident requiring immediate attention), 'incident' (service disruption or issue), 'change' (planned change requiring approval), 'standardchange' (pre-approved routine change), 'inforequest' (information or assistance request). It is wise to provide a friendly id for tracking, it is not the case-number that will be autogenerated.", Annotations: tools.WriteAnnotations("Create Case", false, false)}, caseTools.Create)
+		tools.AddTool(server, &mcp.Tool{Name: "getCases", Description: "Get all cases/tickets", Annotations: tools.ReadOnlyAnnotations("List Cases")}, caseTools.GetAll)
+		tools.AddTool(server, &mcp.Tool{Name: "getCase", Description: "Get details of a case/ticket by its ID", Annotations: tools.ReadOnlyAnnotations("Get Case")}, caseTools.Get)
+		tools.AddTool(server, &mcp.Tool{Name: "updateCasePriority", Description: "Update the priority (1-4) of an existing case, where 1 is highest priority", Annotations: tools.WriteAnnotations("Update Case Priority", true, true)}, caseTools.UpdatePriority)
+		tools.AddTool(server, &mcp.Tool{Name: "updateCasePrimaryContact", Description: "Update the primary contact email for an existing case", Annotations: tools.WriteAnnotations("Update Case Primary Contact", true, true)}, caseTools.UpdatePrimaryContact)
+		tools.AddTool(server, &mcp.Tool{Name: "updateCaseSubject", Description: "Update the subject/title of an existing case", Annotations: tools.WriteAnnotations("Update Case Subject", true, true)}, caseTools.UpdateSubject)
+		tools.AddTool(server, &mcp.Tool{Name: "escalateCase", Description: "Escalate an existing case to higher priority attention", Annotations: tools.WriteAnnotations("Escalate Case", true, true)}, caseTools.Escalate)
+		tools.AddTool(server, &mcp.Tool{Name: "deescalateCase", Description: "De-escalate an existing case back to normal handling", Annotations: tools.WriteAnnotations("De-escalate Case", true, true)}, caseTools.Deescalate)
+		tools.AddTool(server, &mcp.Tool{Name: "addNoteToCase", Description: "Add a note/comment to an existing case", Annotations: tools.WriteAnnotations("Add Note to Case", false, false)}, caseTools.AddNote)
+		tools.AddTool(server, &mcp.Tool{Name: "closeCase", Description: "Request to close a case. The case will be reviewed by an engineer and closed if no further work is needed.", Annotations: tools.WriteAnnotations("Request Case Closure", true, true)}, caseTools.Close)
+
+		log.Println("Tickets domain enabled")
+	}
+
+	return server
+}
+
 func main() {
 	// Define command line flags
 	modeFlag := flag.String("mode", "", "Server mode: STDIO or HTTP (overrides env vars)")
@@ -214,179 +382,12 @@ func main() {
 		log.Printf("Port overridden via command line: %d", *portFlag)
 	}
 
-	// Helper function to create and configure a server instance based on effective configuration
-	createServer := func(effectiveCfg *config.Config) *mcp.Server {
-		// Create a new client manager for this effective configuration
-		effectiveClientManager := client.NewManager(effectiveCfg)
-
-		// Create server with explicit capabilities. Setting Capabilities keeps
-		// logging disabled (prevents client-side setLevel errors in VS Code);
-		// tools/prompts/resources capabilities are still inferred automatically.
-		serverCapabilities := &mcp.ServerCapabilities{}
-		serverCapabilities.AddExtension(apps.UIExtensionID, nil) // MCP Apps (interactive UI)
-		serverOptions := &mcp.ServerOptions{
-			Capabilities: serverCapabilities,
-		}
-
-		server := mcp.NewServer(&mcp.Implementation{
-			Name:    "AUXO MCP Server",
-			Version: version},
-			serverOptions)
-
-		// Initialize and register Zero Trust tools (only if enabled)
-		if effectiveCfg.EnableZeroTrust {
-			protectSurfaceTools := tools.NewProtectSurfaceTools(effectiveClientManager)
-			locationTools := tools.NewLocationTools(effectiveClientManager)
-			stateTools := tools.NewStateTools(effectiveClientManager)
-			contactTools := tools.NewContactTools(effectiveClientManager)
-			assetTools := tools.NewAssetTools(effectiveClientManager)
-			measureTools := tools.NewMeasureTools(effectiveClientManager)
-			protectSurfaceMeasureTools := tools.NewProtectSurfaceMeasureTools(effectiveClientManager)
-			transactionFlowTools := tools.NewTransactionFlowTools(effectiveClientManager)
-			readinessTools := tools.NewReadinessTools(effectiveClientManager)
-			protectSurfacePrompts := prompts.NewProtectSurfacePrompts(effectiveClientManager)
-			readinessPrompts := prompts.NewReadinessPrompts(effectiveClientManager)
-
-			// Initialize resource handlers
-			resourceHandlers := resources.NewHandlers(effectiveClientManager)
-
-			// Register tools - Protect Surfaces
-			tools.AddTool(server, &mcp.Tool{Name: "createProtectSurface", Description: "Create a new protect surface", Annotations: tools.WriteAnnotations("Create Protect Surface", false, false)}, protectSurfaceTools.Create)
-			tools.AddTool(server, &mcp.Tool{Name: "listProtectSurfaces", Description: "List Protect Surfaces, returning a lightweight summary (id, name, relevance) for each. All filter parameters are optional; with none supplied, every protect surface is returned. When multiple filters are supplied, all conditions must match (AND).", Annotations: tools.ReadOnlyAnnotations("List Protect Surfaces")}, protectSurfaceTools.List)
-			tools.AddTool(server, &mcp.Tool{Name: "getProtectSurface", Description: "Get full details of a protect surface by its ID", Annotations: tools.ReadOnlyAnnotations("Get Protect Surface")}, protectSurfaceTools.Get)
-			tools.AddTool(server, &mcp.Tool{Name: "updateProtectSurface", Description: "Update an existing protect surface", Annotations: tools.WriteAnnotations("Update Protect Surface", true, true)}, protectSurfaceTools.Update)
-			tools.AddTool(server, &mcp.Tool{Name: "deleteProtectSurface", Description: "Delete one or more protect surfaces", Annotations: tools.WriteAnnotations("Delete Protect Surfaces", true, true)}, protectSurfaceTools.Delete)
-
-			// Register tools - Locations
-			tools.AddTool(server, &mcp.Tool{Name: "createLocation", Description: "Create a new location", Annotations: tools.WriteAnnotations("Create Location", false, false)}, locationTools.Create)
-			tools.AddTool(server, &mcp.Tool{Name: "listLocations", Description: "Get All Locations", Annotations: tools.ReadOnlyAnnotations("List Locations")}, locationTools.List)
-			tools.AddTool(server, &mcp.Tool{Name: "updateLocation", Description: "Update an existing location", Annotations: tools.WriteAnnotations("Update Location", true, true)}, locationTools.Update)
-			tools.AddTool(server, &mcp.Tool{Name: "deleteLocation", Description: "Delete one or more locations", Annotations: tools.WriteAnnotations("Delete Locations", true, true)}, locationTools.Delete)
-
-			// Register tools - States
-			tools.AddTool(server, &mcp.Tool{Name: "createState", Description: "Create a new state", Annotations: tools.WriteAnnotations("Create State", false, false)}, stateTools.Create)
-			tools.AddTool(server, &mcp.Tool{Name: "listStates", Description: "Get All States", Annotations: tools.ReadOnlyAnnotations("List States")}, stateTools.List)
-			tools.AddTool(server, &mcp.Tool{Name: "updateState", Description: "Update an existing state", Annotations: tools.WriteAnnotations("Update State", true, true)}, stateTools.Update)
-			tools.AddTool(server, &mcp.Tool{Name: "deleteState", Description: "Delete one or more states", Annotations: tools.WriteAnnotations("Delete States", true, true)}, stateTools.Delete)
-
-			// Register tools - Contacts & Assets
-			tools.AddTool(server, &mcp.Tool{Name: "listContacts", Description: "Get All Contacts", Annotations: tools.ReadOnlyAnnotations("List Contacts")}, contactTools.List)
-			tools.AddTool(server, &mcp.Tool{Name: "listAssets", Description: "Get All Assets", Annotations: tools.ReadOnlyAnnotations("List Assets")}, assetTools.List)
-
-			// Register tools - Measures
-			tools.AddTool(server, &mcp.Tool{Name: "listMeasures", Description: "List/search measures from the AUXO catalog. Filters: 'id' for exact measure ID lookup (e.g. 'ztmm-1.1'), 'category' for exact group/category match, 'search_query' for case-insensitive text search across name, caption and explanation. Without filters returns all measures. There is no framework filter; framework mappings are included in each measure's data.", Annotations: tools.ReadOnlyAnnotations("List Security Measures")}, measureTools.List)
-
-			// Register tools - Protect Surface Measures
-			tools.AddTool(server, &mcp.Tool{Name: "listProtectSurfaceMeasures", Description: "List measures assigned to a protect surface", Annotations: tools.ReadOnlyAnnotations("List Protect Surface Measures")}, protectSurfaceMeasureTools.List)
-			tools.AddTool(server, &mcp.Tool{Name: "updateProtectSurfaceMeasure", Description: "Add or Update the implementation status of a measure on a protect surface", Annotations: tools.WriteAnnotations("Update Protect Surface Measure", true, true)}, protectSurfaceMeasureTools.Update)
-			tools.AddTool(server, &mcp.Tool{Name: "removeMeasureFromProtectSurface", Description: "Remove a measure assignment from a protect surface", Annotations: tools.WriteAnnotations("Remove Measure from Protect Surface", true, true)}, protectSurfaceMeasureTools.Remove)
-
-			// Register tools - Transaction Flows
-			tools.AddTool(server, &mcp.Tool{Name: "createTransactionFlow", Description: "Create a flow between two protect surfaces with mutual consensus", Annotations: tools.WriteAnnotations("Create Transaction Flow", false, false)}, transactionFlowTools.CreateFlow)
-			tools.AddTool(server, &mcp.Tool{Name: "createExternalFlow", Description: "Create a flow to/from outside the organization for a protect surface", Annotations: tools.WriteAnnotations("Create External Flow", false, false)}, transactionFlowTools.CreateExternalFlow)
-			tools.AddTool(server, &mcp.Tool{Name: "listTransactionFlows", Description: "List all flows for a specific protect surface", Annotations: tools.ReadOnlyAnnotations("List Transaction Flows")}, transactionFlowTools.ListFlows)
-			tools.AddTool(server, &mcp.Tool{Name: "deleteTransactionFlow", Description: "Delete a flow between two protect surfaces with mutual consensus", Annotations: tools.WriteAnnotations("Delete Transaction Flow", true, true)}, transactionFlowTools.DeleteFlow)
-			tools.AddTool(server, &mcp.Tool{Name: "deleteExternalFlow", Description: "Delete an external flow (to/from outside) for a protect surface", Annotations: tools.WriteAnnotations("Delete External Flow", true, true)}, transactionFlowTools.DeleteExternalFlow)
-
-			// Register tools - Readiness Assessments
-			// startReadinessAssessment is linked to an MCP App (interactive
-			// questionnaire) rendered by hosts that support the ui extension;
-			// other hosts fall back to the tool's text/structured content.
-			apps.RegisterReadinessApp(server)
-			tools.AddTool(server, &mcp.Tool{
-				Name:        "startReadinessAssessment",
-				Description: "Start a Zero Trust readiness assessment. In clients that support MCP Apps this opens an interactive questionnaire panel in which the user answers and submits the assessment themselves. In other clients it returns the questionnaire; interview the user and submit with createReadinessAssessment.",
-				Meta:        apps.ToolMeta(apps.ReadinessAppURI),
-				Annotations: tools.ReadOnlyAnnotations("Start Readiness Assessment"),
-			}, readinessTools.Start)
-			tools.AddTool(server, &mcp.Tool{Name: "getReadinessQuestions", Description: "Get the Zero Trust readiness assessment questionnaire: strategical, tactical and operational questions plus scoping. Every question is answered on a 1-5 CMMI maturity scale with an actual (current) and goal (ambition) level. Use this before creating an assessment.", Annotations: tools.ReadOnlyAnnotations("Get Readiness Questions")}, readinessTools.GetQuestions)
-			tools.AddTool(server, &mcp.Tool{Name: "createReadinessAssessment", Description: "Submit a completed Zero Trust readiness assessment. Requires an answer (actual and goal, 1-5 CMMI) for EVERY strategical, tactical and operational question from getReadinessQuestions, plus scope_goal (desired number of protect surfaces) and answered_by (e-mail of the user). Assessments cannot be edited after submission, so review the answers with the user first.", Annotations: tools.WriteAnnotations("Submit Readiness Assessment", false, false)}, readinessTools.Create)
-			tools.AddTool(server, &mcp.Tool{Name: "listReadinessAssessments", Description: "List all Zero Trust readiness assessments (id and timestamp)", Annotations: tools.ReadOnlyAnnotations("List Readiness Assessments")}, readinessTools.List)
-			tools.AddTool(server, &mcp.Tool{Name: "getReadinessAssessment", Description: "Get full details (all answers) of a Zero Trust readiness assessment by its ID", Annotations: tools.ReadOnlyAnnotations("Get Readiness Assessment")}, readinessTools.Get)
-			tools.AddTool(server, &mcp.Tool{Name: "deleteReadinessAssessment", Description: "Delete a Zero Trust readiness assessment by its ID", Annotations: tools.WriteAnnotations("Delete Readiness Assessment", true, true)}, readinessTools.Delete)
-
-			// Register prompts
-			server.AddPrompt(&mcp.Prompt{
-				Name:        "create-protect-surface-with-location-and-state",
-				Title:       "Create Protect Surface with Location and State",
-				Description: "A comprehensive guide for creating a protect surface along with its associated location and state",
-				Arguments: []*mcp.PromptArgument{
-					{
-						Name:        "protect_surface_name",
-						Description: "Name for the protect surface",
-						Required:    false,
-					},
-					{
-						Name:        "location_name",
-						Description: "Name for the location",
-						Required:    false,
-					},
-					{
-						Name:        "content_type",
-						Description: "Type of content (ipv4, ipv6, azure_cloud, aws_cloud, gcp_cloud, container, hostname, user_identity)",
-						Required:    false,
-					},
-					{
-						Name:        "content",
-						Description: "Comma-separated content values",
-						Required:    false,
-					},
-				},
-			}, protectSurfacePrompts.CreateWithLocationAndState)
-
-			server.AddPrompt(&mcp.Prompt{
-				Name:        "run-readiness-assessment",
-				Title:       "Run Zero Trust Readiness Assessment",
-				Description: "An interactive interview that guides the user through the Zero Trust readiness assessment and submits the result",
-				Arguments: []*mcp.PromptArgument{
-					{
-						Name:        "answered_by",
-						Description: "E-mail address of the person answering the questions",
-						Required:    false,
-					},
-				},
-			}, readinessPrompts.RunAssessment)
-
-			// Register resources
-			server.AddResource(resourceHandlers.ProtectSurfacesResource(), resourceHandlers.ProtectSurfaces)
-			server.AddResource(resourceHandlers.ContactsResource(), resourceHandlers.Contacts)
-			server.AddResource(resourceHandlers.LocationsResource(), resourceHandlers.Locations)
-			server.AddResource(resourceHandlers.StatesResource(), resourceHandlers.States)
-			server.AddResource(resourceHandlers.AssetsResource(), resourceHandlers.Assets)
-			server.AddResource(resourceHandlers.TransactionFlowsResource(), resourceHandlers.TransactionFlows)
-			server.AddResource(resourceHandlers.MeasuresResource(), resourceHandlers.Measures)
-
-			log.Println("Zero Trust domain enabled")
-		}
-
-		// Initialize and register Tickets tools (only if enabled)
-		if effectiveCfg.EnableTickets {
-			caseTools := tools.NewCaseTools(effectiveClientManager)
-
-			// Register case tools
-			tools.AddTool(server, &mcp.Tool{Name: "createCase", Description: "Create a new support case/ticket in the system. Required fields: id, subject, note, priority (1-4 where 1=highest), primary_contact_email, and case_type. Valid case types: 'securityincident' (security incident requiring immediate attention), 'incident' (service disruption or issue), 'change' (planned change requiring approval), 'standardchange' (pre-approved routine change), 'inforequest' (information or assistance request). It is wise to provide a friendly id for tracking, it is not the case-number that will be autogenerated.", Annotations: tools.WriteAnnotations("Create Case", false, false)}, caseTools.Create)
-			tools.AddTool(server, &mcp.Tool{Name: "getCases", Description: "Get all cases/tickets", Annotations: tools.ReadOnlyAnnotations("List Cases")}, caseTools.GetAll)
-			tools.AddTool(server, &mcp.Tool{Name: "getCase", Description: "Get details of a case/ticket by its ID", Annotations: tools.ReadOnlyAnnotations("Get Case")}, caseTools.Get)
-			tools.AddTool(server, &mcp.Tool{Name: "updateCasePriority", Description: "Update the priority (1-4) of an existing case, where 1 is highest priority", Annotations: tools.WriteAnnotations("Update Case Priority", true, true)}, caseTools.UpdatePriority)
-			tools.AddTool(server, &mcp.Tool{Name: "updateCasePrimaryContact", Description: "Update the primary contact email for an existing case", Annotations: tools.WriteAnnotations("Update Case Primary Contact", true, true)}, caseTools.UpdatePrimaryContact)
-			tools.AddTool(server, &mcp.Tool{Name: "updateCaseSubject", Description: "Update the subject/title of an existing case", Annotations: tools.WriteAnnotations("Update Case Subject", true, true)}, caseTools.UpdateSubject)
-			tools.AddTool(server, &mcp.Tool{Name: "escalateCase", Description: "Escalate an existing case to higher priority attention", Annotations: tools.WriteAnnotations("Escalate Case", false, true)}, caseTools.Escalate)
-			tools.AddTool(server, &mcp.Tool{Name: "deescalateCase", Description: "De-escalate an existing case back to normal handling", Annotations: tools.WriteAnnotations("De-escalate Case", false, true)}, caseTools.Deescalate)
-			tools.AddTool(server, &mcp.Tool{Name: "addNoteToCase", Description: "Add a note/comment to an existing case", Annotations: tools.WriteAnnotations("Add Note to Case", false, false)}, caseTools.AddNote)
-			tools.AddTool(server, &mcp.Tool{Name: "closeCase", Description: "Request to close a case. The case will be reviewed by an engineer and closed if no further work is needed.", Annotations: tools.WriteAnnotations("Request Case Closure", false, true)}, caseTools.Close)
-
-			log.Println("Tickets domain enabled")
-		}
-
-		return server
-	}
-
 	// Run the server
 	switch cfg.ServerMode {
 	case "STDIO":
 		log.Println("Starting MCP server in STDIO mode; awaiting client connection on stdin/stdout")
 		// Reduce log verbosity in STDIO mode to minimize client warnings
-		server := createServer(cfg)
+		server := newServer(cfg)
 		if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 			log.Fatal(err)
 		}
@@ -404,7 +405,7 @@ func main() {
 					o.ztToken != "", o.ticketToken != "", o.apiURL != "", effectiveCfg.EnableZeroTrust, effectiveCfg.EnableTickets, effectiveCfg.Debug)
 			}
 
-			return createServer(effectiveCfg)
+			return newServer(effectiveCfg)
 		}, nil)
 
 		// Setup HTTP server

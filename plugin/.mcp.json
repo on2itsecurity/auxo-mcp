@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "auxo": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@on2it/auxo-mcp@0.2.0"
+      ],
+      "env": {
+        "AUXO_ZT_TOKEN": "${user_config.zt_token}",
+        "AUXO_TICKET_TOKEN": "${user_config.ticket_token}",
+        "AUXO_API_URL": "${user_config.api_url}"
+      }
+    }
+  }
+}

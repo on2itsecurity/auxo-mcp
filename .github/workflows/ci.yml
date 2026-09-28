@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
 
@@ -23,3 +24,84 @@ jobs:
       - name: Vet
         working-directory: server
         run: go vet ./...
+
+      - name: Test
+        working-directory: server
+        run: go test ./...
+
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # On a tag push this also compares against the tag (GITHUB_REF_TYPE=tag).
+      - name: Check versions
+        run: scripts/check-versions.sh
+
+      - name: Check plugin folder hygiene
+        run: scripts/check-plugin-hygiene.sh plugin
+
+      # Validates plugin.json, .mcp.json, skills and the marketplace file. The
+      # command only parses local files and needs no Claude login.
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate plugin
+        run: claude plugin validate ./plugin
+
+      - name: Validate marketplace
+        run: claude plugin validate .
+
+  npm-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build binary for this runner
+        working-directory: server
+        env:
+          CGO_ENABLED: "0"
+        run: go build -ldflags "-s -w -X main.version=v0.0.0-ci" -o ../dist/auxo-mcp-server-linux-amd64 .
+
+      - name: Prepare npm packages
+        env:
+          NPM_PREPARE_ALLOW_MISSING: "1"
+        run: scripts/npm-prepare.sh 0.0.0-ci dist
+
+      - name: Pack and install
+        run: |
+          mkdir -p "$RUNNER_TEMP/pack" "$RUNNER_TEMP/install"
+          (cd npm/platforms/linux-x64 && npm pack --pack-destination "$RUNNER_TEMP/pack")
+          (cd npm/auxo-mcp && npm pack --pack-destination "$RUNNER_TEMP/pack")
+          cd "$RUNNER_TEMP/install"
+          npm init -y >/dev/null
+          # The other platform packages do not exist at 0.0.0-ci; npm skips
+          # them because they are optional and do not match this os/cpu.
+          npm install --no-audit --no-fund "$RUNNER_TEMP"/pack/*.tgz
+
+      - name: MCP initialize over stdio (no tokens, as a blank plugin config)
+        working-directory: ${{ runner.temp }}/install
+        env:
+          AUXO_ZT_TOKEN: ""
+          AUXO_TICKET_TOKEN: ""
+          AUXO_API_URL: ""
+        run: node "$GITHUB_WORKSPACE/scripts/mcp-smoke-test.js" -- npx --no auxo-mcp
+
+      - name: MCP tools/list over stdio (placeholder tokens, no API calls)
+        working-directory: ${{ runner.temp }}/install
+        env:
+          AUXO_ZT_TOKEN: your-zt-token
+          AUXO_TICKET_TOKEN: your-ticket-token
+        run: node "$GITHUB_WORKSPACE/scripts/mcp-smoke-test.js" --expect-tools -- npx --no auxo-mcp

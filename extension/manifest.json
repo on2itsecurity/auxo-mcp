@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.3",
   "name": "auxo-mcp-server",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "display_name": "AUXO MCP Server",
   "description": "Access AUXO Zero Trust and Case Management from Claude",
   "author": {
@@ -238,6 +238,9 @@
     }
   ],
   "compatibility": {
-    "platforms": ["darwin", "win32"]
+    "platforms": [
+      "darwin",
+      "win32"
+    ]
   }
 }
