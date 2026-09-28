@@ -21,9 +21,47 @@ You only need the token(s) for the domain(s) you intend to use; the server autom
 
 ## Installation
 
-### Claude Desktop Extension
+### Claude plugin (Claude Code and Cowork)
 
-Download the latest `auxo-mcp-server.mcpb` from the [Releases](../../releases/latest) page and double-click it, or drag it into Claude Desktop settings. Claude will prompt you for your API tokens during setup.
+The recommended way to use AUXO with Claude is the **AUXO by ON2IT** plugin in [`plugin/`](plugin/). It starts this server locally through `npx` from the [`@on2it/auxo-mcp`](npm/auxo-mcp/) npm package, asks for your tokens when you enable it (tokens are kept in your system's secure credential store), and adds skills for protect surface design and case management. It needs Node.js 18 or later and works in Claude Code and in Cowork sessions running on your computer; claude.ai chat in the browser and mobile do not start local servers.
+
+Once the plugin is listed in the Claude plugin directory, install it from there. Until then, or to test a branch, add this repository as a marketplace in Claude Code:
+
+```text
+/plugin marketplace add on2itsecurity/auxo-mcp
+/plugin install auxo@on2it
+```
+
+Or load a working copy directly:
+
+```bash
+claude --plugin-dir ./plugin
+```
+
+See [plugin/README.md](plugin/README.md) for what the plugin runs, sends and stores.
+
+### npm
+
+For other MCP clients that can run `npx`, use the npm package directly (Node.js 18 or later). Pin an exact version:
+
+```json
+{
+  "mcpServers": {
+    "auxo": {
+      "command": "npx",
+      "args": ["-y", "@on2it/auxo-mcp@0.2.0"],
+      "env": {
+        "AUXO_ZT_TOKEN": "your-zt-token",
+        "AUXO_TICKET_TOKEN": "your-ticket-token"
+      }
+    }
+  }
+}
+```
+
+### Claude Desktop Extension (manual install)
+
+The MCPB desktop extension is still published with every release for manual installation in Claude Desktop, but it is no longer the route into the Claude directory, which now takes local servers only as plugins. Download the latest `auxo-mcp-server.mcpb` from the [Releases](../../releases/latest) page and double-click it, or drag it into Claude Desktop settings. Claude will prompt you for your API tokens during setup.
 
 > [!NOTE]
 > On macOS the extension manifest launches the bundled binary through `/bin/sh -c 'chmod +x "$0" 2>/dev/null; exec "$0"'`. This is a deliberate workaround: Claude Desktop's extension extractor does not preserve the executable bit on bundled binaries, so the wrapper restores it before exec'ing the server. It runs no other commands and touches no files outside the extension directory.
@@ -54,7 +92,7 @@ Run it in HTTP mode (the container default):
 
 ```bash
 docker run -p 8080:8080 \
-  -e AUXO_ZT_TOKEN=your-token \
+  -e AUXO_ZT_TOKEN=your-zt-token \
   -e AUXO_TICKET_TOKEN=your-ticket-token \
   ghcr.io/on2itsecurity/auxo-mcp:latest
 ```
@@ -98,7 +136,7 @@ Add to `.vscode/mcp.json` in your workspace:
       "type": "stdio",
       "command": "path/to/auxo-mcp-server",
       "env": {
-        "AUXO_ZT_TOKEN": "your-token",
+        "AUXO_ZT_TOKEN": "your-zt-token",
         "AUXO_TICKET_TOKEN": "your-ticket-token"
       }
     }
@@ -116,7 +154,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
     "auxo": {
       "command": "path/to/auxo-mcp-server",
       "env": {
-        "AUXO_ZT_TOKEN": "your-token",
+        "AUXO_ZT_TOKEN": "your-zt-token",
         "AUXO_TICKET_TOKEN": "your-ticket-token"
       }
     }
@@ -218,7 +256,7 @@ Some prompts to get started:
 
 ## Privacy
 
-The server communicates only with the configured AUXO API endpoint (`api.on2it.net` by default) and sends only the data needed to execute the requested tool call. It does not collect telemetry, does not read conversation history, and stores nothing locally; API tokens are handled by your MCP client (Claude Desktop stores them in the OS keychain). See the [ON2IT Privacy & Cookie Notice](https://on2it.net/privacy/) for how ON2IT processes data on its platform.
+The server communicates only with the configured AUXO API endpoint (`api.on2it.net` by default) and sends only the data needed to execute the requested tool call. It does not collect telemetry, does not read conversation history, and stores nothing locally; API tokens are handled by your MCP client (the Claude plugin and Claude Desktop store them in the OS credential store). See the [ON2IT Privacy & Cookie Notice](https://on2it.net/privacy/) for how ON2IT processes data on its platform.
 
 ## License
 

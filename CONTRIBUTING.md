@@ -19,6 +19,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 - [I Want To Contribute](#i-want-to-contribute)
   - [Reporting Bugs](#reporting-bugs)
   - [Suggesting Enhancements](#suggesting-enhancements)
+- [Releasing](#releasing)
 - [Attribution](#attribution)
 
 
@@ -106,6 +107,31 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/on2its
 - Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 - **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
 - **Explain why this enhancement would be useful** to most AUXO MCP Server users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
+
+## Releasing
+
+One version number is shared by the git tag (without the `v`), the six npm packages, `plugin/.claude-plugin/plugin.json`, the exact pin in `plugin/.mcp.json` and `extension/manifest.json`. CI fails when the committed files disagree, and the release workflow refuses to publish when they disagree with the tag.
+
+1. On a branch, set the new version:
+
+   ```bash
+   scripts/bump-version.sh 0.3.0
+   ```
+
+   This updates `plugin.json`, `.mcp.json` and `extension/manifest.json`. The npm `package.json` files keep their `0.0.0-dev` placeholder; the release workflow sets their version from the tag.
+2. Open a pull request, let CI pass and merge it. Make no further edits to those files before tagging.
+3. Tag the merge commit on `main` and push the tag:
+
+   ```bash
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```
+
+4. The release workflow builds the binaries, publishes the five platform packages and then `@on2it/auxo-mcp` to npm, creates the GitHub release with the binaries and the `.mcpb` extension, and pushes the container image. Check that all six packages show the new version on npmjs.com.
+
+Order matters. The Claude plugin directory scans every new commit on `main`, and `plugin/.mcp.json` on `main` pins the version that installs will run. That version must be on npm before the directory validates it, so tag and let the release finish promptly after merging a version bump. If the npm publish fails, fix and re-run the release job; already published packages are skipped.
+
+Details of the npm packaging, the first publish with `NPM_TOKEN`, trusted publishing and deprecating a bad version are in [npm/README.md](npm/README.md).
 
 ## Attribution
 This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!
